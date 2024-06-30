@@ -31,12 +31,14 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         https://github.com/foutrelis/chromium-launcher/archive/v$_launcher_ver/chromium-launcher-$_launcher_ver.tar.gz
         https://github.com/uazo/cromite/archive/refs/tags/v$pkgver-$_commit.tar.gz
         https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_pkgver-1_amd64.deb
-        widevine-revision.patch)
+        widevine-revision.patch
+        use-oauth2-client-switches-as-default.patch)
 sha256sums=('6040cf4b1fe7afc64552a801dbe68d49cd2a619f9acf14a8d57384cbd7c3f4c7'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
             '09ef9706a148aa6771baedd17e60a718a4ae2af8bc5acfe65d3fbdeda07aceec'
             '3ec1cadbb55cf66cc51f0421eace324a88836ee2d982b945b8f67a3f131b0924'
-            '474d900145ae6561220b550f1360fdc5c33e46b49e411e42d40799758a9b9565')
+            '474d900145ae6561220b550f1360fdc5c33e46b49e411e42d40799758a9b9565'
+            'a9b417b96daec33c9059065e15b3a92ae1bf4b59f89d353659b335d9e0379db6')
 
 if (( _manual_clone )); then
   source[0]=fetch-chromium-release
@@ -76,12 +78,12 @@ _unwanted_bundled_libs=(
 depends+=(${_system_libs[@]})
 
 # Google API keys (see https://www.chromium.org/developers/how-tos/api-keys)
-# Note: These are for Arch Linux use ONLY. For your own distribution, please
-# get your own set of keys.
 #
 # Starting with Chromium 89 (2021-03-02) the OAuth2 credentials have been left
 # out: https://archlinux.org/news/chromium-losing-sync-support-in-early-march/
-_google_api_key=AIzaSyDwr302FpOSkGRpLlUpPThNTDPbXcIn_FM
+_google_api_key=AIzaSyCkfPOPZXDKNn8hhgu3JrA62wIgC93d44k
+_google_default_client_id=77185425430.apps.googleusercontent.com
+_google_default_client_secret=OTJgUOQcT7lO7GsGZq2G4IlT
 
 prepare() {
   bsdtar -x --strip-components 4 -f data.tar.xz opt/google/chrome/WidevineCdm
@@ -102,6 +104,21 @@ prepare() {
     third_party/blink/renderer/core/xml/parser/xml_document_parser.cc \
     third_party/libxml/chromium/*.cc \
     third_party/maldoca/src/maldoca/ole/oss_utils.h
+
+  pushd $srcdir/cromite-$pkgver-$_commit/build/patches
+  # Enable reverse image search
+  rm -f WIN-Disable-search-for-image.patch
+  # Enable Google {Account, Translate}
+  rm -f add-browser-policy.patch
+  rm -f ungoogled-chromium-Disable-translate-integration.patch
+  rm -f ungoogled-chromium-Disable-Gaia.patch
+  rm -f Internal-firewall.patch
+  rm -f Remove-GoogleAccountsPrivateApiHost.patch
+  # Remove keyboard protection
+  rm -f Keyboard-protection-flag.patch
+  # Remove bundled ABP
+  find . -iname "*eyeo*.patch" -type f -delete
+  popd
 
   for patch in $(cat $srcdir/cromite-$pkgver-$_commit/build/cromite_patches_list.txt); do
     if [ -f $srcdir/cromite-$pkgver-$_commit/build/patches/$patch ]; then
@@ -170,6 +187,8 @@ build() {
     'use_qt6=true'
     'moc_qt6_path="/usr/lib/qt6"'
     "google_api_key=\"$_google_api_key\""
+    "google_default_client_id=\"$_google_default_client_id\""
+    "google_default_client_secret=\"$_google_default_client_secret\""
   )
 
   if [[ -n ${_system_libs[icu]+set} ]]; then
@@ -196,6 +215,10 @@ build() {
       "rustc_version=\"$(rustc --version)\""
     )
   fi
+
+  # ThinLTO is enabled by default
+  CFLAGS+='   -march=native'
+  CXXFLAGS+=' -march=native'
 
   # Facilitate deterministic builds (taken from build/config/compiler/BUILD.gn)
   CFLAGS+='   -Wno-builtin-macro-redefined'
