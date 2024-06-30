@@ -3,16 +3,18 @@
 # Contributor: Jan "heftig" Steffens <jan.steffens@gmail.com>
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
-pkgname=chromium
-pkgver=126.0.6478.126
+pkgname=cromite
+pkgver=126.0.6478.127
+_pkgver=126.0.6478.126
+_commit=f40a60d6ca738965161b25e5c8201382d929318a
 pkgrel=1
 _launcher_ver=8
-_manual_clone=0
-_system_clang=1
-pkgdesc="A web browser built for speed, simplicity, and security"
+_manual_clone=1
+_system_clang=0
+pkgdesc="A Bromite fork with ad blocking and privacy enhancements"
 arch=('x86_64')
-url="https://www.chromium.org/Home"
-license=('BSD-3-Clause')
+url="https://github.com/uazo/cromite"
+license=('GPL3')
 depends=('gtk3' 'nss' 'alsa-lib' 'xdg-utils' 'libxss' 'libcups' 'libgcrypt'
          'ttf-liberation' 'systemd' 'dbus' 'libpulse' 'pciutils' 'libva'
          'libffi' 'desktop-file-utils' 'hicolor-icon-theme')
@@ -24,24 +26,16 @@ optdepends=('pipewire: WebRTC desktop sharing under Wayland'
             'org.freedesktop.secrets: password storage backend on GNOME / Xfce'
             'kwallet: support for storing passwords in KWallet on Plasma')
 options=('!lto') # Chromium adds its own flags for ThinLTO
-source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$pkgver.tar.xz
+source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$_pkgver.tar.xz
         https://github.com/foutrelis/chromium-launcher/archive/v$_launcher_ver/chromium-launcher-$_launcher_ver.tar.gz
-        https://gitlab.com/Matt.Jolly/chromium-patches/-/archive/${pkgver%%.*}/chromium-patches-${pkgver%%.*}.tar.bz2
-        allow-ANGLEImplementation-kVulkan.patch
-        drop-flag-unsupported-by-clang17.patch
-        compiler-rt-adjust-paths.patch
-        use-oauth2-client-switches-as-default.patch)
-sha256sums=('5d5206637e659f03e006cd8b6b269c49c0c2c697d10517e14dbcea851831e143'
+        https://github.com/uazo/cromite/archive/refs/tags/v$pkgver-$_commit.tar.gz)
+sha256sums=('6040cf4b1fe7afc64552a801dbe68d49cd2a619f9acf14a8d57384cbd7c3f4c7'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            'daf0df74d2601c35fd66a746942d9ca3fc521ede92312f85af51d94c399fd6e0'
-            '8f81059d79040ec598b5fb077808ec69d26d6c9cbebf9c4f4ea48b388a2596c5'
-            '028acc97299cec5d1ed9f456bbdc462807fa491277d266db2aa1d405d3cd753d'
-            'b3de01b7df227478687d7517f61a777450dca765756002c80c4915f271e2d961'
-            'a9b417b96daec33c9059065e15b3a92ae1bf4b59f89d353659b335d9e0379db6')
+            '09ef9706a148aa6771baedd17e60a718a4ae2af8bc5acfe65d3fbdeda07aceec')
 
 if (( _manual_clone )); then
   source[0]=fetch-chromium-release
-  makedepends+=('python-httplib2' 'python-pyparsing' 'python-six')
+  sha256sums[0]=61f0b41fa237922996c995b089df58117a7459b4c294d17e6f1cd2c6a7d2095e
 fi
 
 # Possible replacements are listed in build/linux/unbundle/replace_gn_files.py
@@ -86,9 +80,9 @@ _google_api_key=AIzaSyDwr302FpOSkGRpLlUpPThNTDPbXcIn_FM
 
 prepare() {
   if (( _manual_clone )); then
-    ./fetch-chromium-release $pkgver
+    ./fetch-chromium-release $_pkgver
   fi
-  cd chromium-$pkgver
+  cd chromium-$_pkgver
 
   # Allow building against system libraries in official builds
   sed -i 's/OFFICIAL_BUILD/GOOGLE_CHROME_BUILD/' \
@@ -102,36 +96,17 @@ prepare() {
     third_party/libxml/chromium/*.cc \
     third_party/maldoca/src/maldoca/ole/oss_utils.h
 
-  # Use the --oauth2-client-id= and --oauth2-client-secret= switches for
-  # setting GOOGLE_DEFAULT_CLIENT_ID and GOOGLE_DEFAULT_CLIENT_SECRET at
-  # runtime -- this allows signing into Chromium without baked-in values
-  patch -Np1 -i ../use-oauth2-client-switches-as-default.patch
-
-  # Upstream fixes
-  patch -Np1 -i ../allow-ANGLEImplementation-kVulkan.patch
-
-  # Drop compiler flag that needs newer clang
-  patch -Np1 -i ../drop-flag-unsupported-by-clang17.patch
-
-  # Allow libclang_rt.builtins from compiler-rt >= 16 to be used
-  patch -Np1 -i ../compiler-rt-adjust-paths.patch
-
-  # Fixes for building with libstdc++ instead of libc++
-  patch -Np1 -i ../chromium-patches-*/chromium-117-material-color-include.patch
+  for patch in $(cat $srcdir/cromite-$pkgver-$_commit/build/cromite_patches_list.txt); do
+    if [ -f $srcdir/cromite-$pkgver-$_commit/build/patches/$patch ]; then
+      echo "Applying: $patch"
+      git apply $srcdir/cromite-$pkgver-$_commit/build/patches/$patch
+    fi
+  done
 
   # Link to system tools required by the build
   mkdir -p third_party/node/linux/node-linux-x64/bin
-  ln -s /usr/bin/node third_party/node/linux/node-linux-x64/bin/
-  ln -s /usr/bin/java third_party/jdk/current/bin/
-
-  if (( !_system_clang )); then
-    # Use prebuilt rust as system rust cannot be used due to the error:
-    #   error: the option `Z` is only accepted on the nightly compiler
-    ./tools/rust/update_rust.py
-
-    # To link to rust libraries we need to compile with prebuilt clang
-    ./tools/clang/scripts/update.py
-  fi
+  ln -sf /usr/bin/node third_party/node/linux/node-linux-x64/bin/
+  ln -sf /usr/bin/java third_party/jdk/current/bin/
 
   # Remove bundled libraries for which we will use the system copies; this
   # *should* do what the remove_bundled_libraries.py script does, with the
@@ -151,9 +126,9 @@ prepare() {
 }
 
 build() {
-  make -C chromium-launcher-$_launcher_ver
+  make CHROMIUM_NAME=cromite -C chromium-launcher-$_launcher_ver
 
-  cd chromium-$pkgver
+  cd chromium-$_pkgver
 
   if (( _system_clang )); then
     export CC=clang
@@ -168,24 +143,20 @@ build() {
     export NM=$_clang_path/llvm-nm
   fi
 
-  local _flags=(
+  local _flags=('target_os = "linux"')
+  _flags+=$(cat $srcdir/cromite-$pkgver-$_commit/build/cromite.gn_args)
+  _flags+=(
     'custom_toolchain="//build/toolchain/linux/unbundle:default"'
     'host_toolchain="//build/toolchain/linux/unbundle:default"'
-    'is_official_build=true' # implies is_cfi=true on x86_64
     'symbol_level=0' # sufficient for backtraces on x86(_64)
     'treat_warnings_as_errors=false'
-    'disable_fieldtrial_testing_config=true'
     'blink_enable_generated_code_formatting=false'
-    'ffmpeg_branding="Chrome"'
-    'proprietary_codecs=true'
     'rtc_use_pipewire=true'
     'link_pulseaudio=true'
     'use_custom_libcxx=true' # https://github.com/llvm/llvm-project/issues/61705
     'use_sysroot=false'
     'use_system_libffi=true'
-    'enable_hangout_services_extension=true'
     'enable_widevine=true'
-    'enable_nacl=false'
     'use_qt6=true'
     'moc_qt6_path="/usr/lib/qt6"'
     "google_api_key=\"$_google_api_key\""
@@ -249,35 +220,35 @@ build() {
 
 package() {
   cd chromium-launcher-$_launcher_ver
-  make PREFIX=/usr DESTDIR="$pkgdir" install
+  make PREFIX=/usr DESTDIR="$pkgdir" CHROMIUM_NAME=cromite install
   install -Dm644 LICENSE \
-    "$pkgdir/usr/share/licenses/chromium/LICENSE.launcher"
+    "$pkgdir/usr/share/licenses/cromite/LICENSE.launcher"
 
-  cd ../chromium-$pkgver
+  cd ../chromium-$_pkgver
 
-  install -D out/Release/chrome "$pkgdir/usr/lib/chromium/chromium"
-  install -D out/Release/chromedriver.unstripped "$pkgdir/usr/bin/chromedriver"
-  install -Dm4755 out/Release/chrome_sandbox "$pkgdir/usr/lib/chromium/chrome-sandbox"
+  install -D out/Release/chrome "$pkgdir/usr/lib/cromite/cromite"
+  # install -D out/Release/chromedriver.unstripped "$pkgdir/usr/bin/chromedriver"
+  install -Dm4755 out/Release/chrome_sandbox "$pkgdir/usr/lib/cromite/chrome-sandbox"
 
   install -Dm644 chrome/installer/linux/common/desktop.template \
-    "$pkgdir/usr/share/applications/chromium.desktop"
+    "$pkgdir/usr/share/applications/cromite.desktop"
   install -Dm644 chrome/app/resources/manpage.1.in \
-    "$pkgdir/usr/share/man/man1/chromium.1"
+    "$pkgdir/usr/share/man/man1/cromite.1"
   sed -i \
-    -e 's/@@MENUNAME@@/Chromium/g' \
+    -e 's/@@MENUNAME@@/Cromite/g' \
     -e 's/@@PACKAGE@@/chromium/g' \
-    -e 's/@@USR_BIN_SYMLINK_NAME@@/chromium/g' \
-    "$pkgdir/usr/share/applications/chromium.desktop" \
-    "$pkgdir/usr/share/man/man1/chromium.1"
+    -e 's/@@USR_BIN_SYMLINK_NAME@@/cromite/g' \
+    "$pkgdir/usr/share/applications/cromite.desktop" \
+    "$pkgdir/usr/share/man/man1/cromite.1"
 
   install -Dm644 chrome/installer/linux/common/chromium-browser/chromium-browser.appdata.xml \
-    "$pkgdir/usr/share/metainfo/chromium.appdata.xml"
+    "$pkgdir/usr/share/metainfo/cromite.appdata.xml"
   sed -ni \
-    -e 's/chromium-browser\.desktop/chromium.desktop/' \
+    -e 's/chromium-browser\.desktop/cromite.desktop/' \
     -e '/<update_contact>/d' \
     -e '/<p>/N;/<p>\n.*\(We invite\|Chromium supports Vorbis\)/,/<\/p>/d' \
     -e '/^<?xml/,$p' \
-    "$pkgdir/usr/share/metainfo/chromium.appdata.xml"
+    "$pkgdir/usr/share/metainfo/cromite.appdata.xml"
 
   local toplevel_files=(
     chrome_100_percent.pak
@@ -286,7 +257,7 @@ package() {
     libqt5_shim.so
     libqt6_shim.so
     resources.pak
-    v8_context_snapshot.bin
+    snapshot_blob.bin
 
     # ANGLE
     libEGL.so
@@ -302,20 +273,20 @@ package() {
     toplevel_files+=(icudtl.dat)
   fi
 
-  cp "${toplevel_files[@]/#/out/Release/}" "$pkgdir/usr/lib/chromium/"
-  install -Dm644 -t "$pkgdir/usr/lib/chromium/locales" out/Release/locales/*.pak
+  cp "${toplevel_files[@]/#/out/Release/}" "$pkgdir/usr/lib/cromite/"
+  install -Dm644 -t "$pkgdir/usr/lib/cromite/locales" out/Release/locales/*.pak
 
   for size in 24 48 64 128 256; do
     install -Dm644 "chrome/app/theme/chromium/product_logo_$size.png" \
-      "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/chromium.png"
+      "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/cromite.png"
   done
 
   for size in 16 32; do
     install -Dm644 "chrome/app/theme/default_100_percent/chromium/product_logo_$size.png" \
-      "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/chromium.png"
+      "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/cromite.png"
   done
 
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/chromium/LICENSE"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/cromite/LICENSE"
 }
 
 # vim:set ts=2 sw=2 et:
