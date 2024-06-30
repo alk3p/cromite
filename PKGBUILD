@@ -25,13 +25,18 @@ optdepends=('pipewire: WebRTC desktop sharing under Wayland'
             'gtk4: for --gtk-version=4 (GTK4 IME might work better on Wayland)'
             'org.freedesktop.secrets: password storage backend on GNOME / Xfce'
             'kwallet: support for storing passwords in KWallet on Plasma')
+install="${pkgname}.install"
 options=('!lto') # Chromium adds its own flags for ThinLTO
 source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$_pkgver.tar.xz
         https://github.com/foutrelis/chromium-launcher/archive/v$_launcher_ver/chromium-launcher-$_launcher_ver.tar.gz
-        https://github.com/uazo/cromite/archive/refs/tags/v$pkgver-$_commit.tar.gz)
+        https://github.com/uazo/cromite/archive/refs/tags/v$pkgver-$_commit.tar.gz
+        https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_pkgver-1_amd64.deb
+        widevine-revision.patch)
 sha256sums=('6040cf4b1fe7afc64552a801dbe68d49cd2a619f9acf14a8d57384cbd7c3f4c7'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            '09ef9706a148aa6771baedd17e60a718a4ae2af8bc5acfe65d3fbdeda07aceec')
+            '09ef9706a148aa6771baedd17e60a718a4ae2af8bc5acfe65d3fbdeda07aceec'
+            '3ec1cadbb55cf66cc51f0421eace324a88836ee2d982b945b8f67a3f131b0924'
+            '474d900145ae6561220b550f1360fdc5c33e46b49e411e42d40799758a9b9565')
 
 if (( _manual_clone )); then
   source[0]=fetch-chromium-release
@@ -79,6 +84,8 @@ depends+=(${_system_libs[@]})
 _google_api_key=AIzaSyDwr302FpOSkGRpLlUpPThNTDPbXcIn_FM
 
 prepare() {
+  bsdtar -x --strip-components 4 -f data.tar.xz opt/google/chrome/WidevineCdm
+
   if (( _manual_clone )); then
     ./fetch-chromium-release $_pkgver
   fi
@@ -102,6 +109,9 @@ prepare() {
       git apply $srcdir/cromite-$pkgver-$_commit/build/patches/$patch
     fi
   done
+
+  # Widevine fixes from Debian
+  patch -Np1 -i $srcdir/widevine-revision.patch
 
   # Link to system tools required by the build
   mkdir -p third_party/node/linux/node-linux-x64/bin
@@ -287,6 +297,11 @@ package() {
   done
 
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/cromite/LICENSE"
+
+  cp -a $srcdir/WidevineCdm "$pkgdir/usr/lib/cromite/"
+  find "$pkgdir/usr/lib/cromite/WidevineCdm" -name '*.so' -exec chmod +x {} \;
+  install -Dm644 $srcdir/WidevineCdm/LICENSE \
+    "$pkgdir/usr/share/licenses/cromite/LICENSE.widevine"
 }
 
 # vim:set ts=2 sw=2 et:
