@@ -10,7 +10,7 @@ _commit=f40a60d6ca738965161b25e5c8201382d929318a
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
-_system_clang=0
+_system_clang=1
 pkgdesc="A Bromite fork with ad blocking and privacy enhancements"
 arch=('x86_64')
 url="https://github.com/uazo/cromite"
@@ -19,12 +19,14 @@ depends=('gtk3' 'nss' 'alsa-lib' 'xdg-utils' 'libxss' 'libcups' 'libgcrypt'
          'ttf-liberation' 'systemd' 'dbus' 'libpulse' 'pciutils' 'libva'
          'libffi' 'desktop-file-utils' 'hicolor-icon-theme')
 makedepends=('python' 'gn' 'ninja' 'clang' 'lld' 'gperf' 'nodejs' 'pipewire'
-             'rust' 'qt5-base' 'qt6-base' 'java-runtime-headless' 'git')
+             'rust' 'rust-bindgen' 'qt5-base' 'qt6-base' 'java-runtime-headless'
+             'git')
 optdepends=('pipewire: WebRTC desktop sharing under Wayland'
             'kdialog: support for native dialogs in Plasma'
             'gtk4: for --gtk-version=4 (GTK4 IME might work better on Wayland)'
             'org.freedesktop.secrets: password storage backend on GNOME / Xfce'
-            'kwallet: support for storing passwords in KWallet on Plasma')
+            'kwallet: support for storing passwords in KWallet on Plasma'
+            'upower: Battery Status API support')
 install="${pkgname}.install"
 options=('!lto') # Chromium adds its own flags for ThinLTO
 source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$_pkgver.tar.xz
@@ -32,12 +34,18 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         https://github.com/uazo/cromite/archive/refs/tags/v$pkgver-$_commit.tar.gz
         https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_pkgver-1_amd64.deb
         widevine-revision.patch
+        chromium-browser-ui-missing-deps.patch
+        compiler-rt-adjust-paths.patch
+        increase-fortify-level.patch
         use-oauth2-client-switches-as-default.patch)
 sha256sums=('6040cf4b1fe7afc64552a801dbe68d49cd2a619f9acf14a8d57384cbd7c3f4c7'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
             '09ef9706a148aa6771baedd17e60a718a4ae2af8bc5acfe65d3fbdeda07aceec'
             '3ec1cadbb55cf66cc51f0421eace324a88836ee2d982b945b8f67a3f131b0924'
             '474d900145ae6561220b550f1360fdc5c33e46b49e411e42d40799758a9b9565'
+            '75f9c3ccdcc914d029ddcc5ca181df90177db35a343bf44ff541ff127bcea43d'
+            'b3de01b7df227478687d7517f61a777450dca765756002c80c4915f271e2d961'
+            'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
             'a9b417b96daec33c9059065e15b3a92ae1bf4b59f89d353659b335d9e0379db6')
 
 if (( _manual_clone )); then
@@ -49,7 +57,7 @@ fi
 # Keys are the names in the above script; values are the dependencies in Arch
 declare -gA _system_libs=(
   [brotli]=brotli
-  [dav1d]=dav1d
+  #[dav1d]=dav1d
   #[ffmpeg]=ffmpeg    # YouTube playback stopped working in Chromium 120
   [flac]=flac
   [fontconfig]=fontconfig
@@ -102,8 +110,7 @@ prepare() {
          -e '1i #include <cstdlib>' \
     third_party/blink/renderer/core/xml/*.cc \
     third_party/blink/renderer/core/xml/parser/xml_document_parser.cc \
-    third_party/libxml/chromium/*.cc \
-    third_party/maldoca/src/maldoca/ole/oss_utils.h
+    third_party/libxml/chromium/*.cc
 
   pushd $srcdir/cromite-$pkgver-$_commit/build/patches
   # Enable reverse image search
@@ -130,10 +137,24 @@ prepare() {
   # Widevine fixes from Debian
   patch -Np1 -i $srcdir/widevine-revision.patch
 
+  # https://issues.chromium.org/issues/351157339
+  patch -Np1 -i $srcdir/chromium-browser-ui-missing-deps.patch
+
+  # Allow libclang_rt.builtins from compiler-rt >= 16 to be used
+  patch -Np1 -i $srcdir/compiler-rt-adjust-paths.patch
+
+  # Increase _FORTIFY_SOURCE level to match Arch's default flags
+  patch -Np1 -i $srcdir/increase-fortify-level.patch
+
   # Link to system tools required by the build
   mkdir -p third_party/node/linux/node-linux-x64/bin
   ln -sf /usr/bin/node third_party/node/linux/node-linux-x64/bin/
   ln -sf /usr/bin/java third_party/jdk/current/bin/
+
+  # test deps are broken for ui/lens with system ICU
+  # "//third_party/icu:icuuc_public" (taken from Gentoo ebuild)
+  sed -i '/source_set("unit_tests") {/,/}/d' chrome/browser/ui/lens/BUILD.gn
+  sed -i '/lens:unit_tests/d' chrome/test/BUILD.gn components/BUILD.gn
 
   # Remove bundled libraries for which we will use the system copies; this
   # *should* do what the remove_bundled_libraries.py script does, with the
@@ -212,6 +233,7 @@ build() {
 
     _flags+=(
       'rust_sysroot_absolute="/usr"'
+      'rust_bindgen_root="/usr"'
       "rustc_version=\"$(rustc --version)\""
     )
   fi
