@@ -4,9 +4,9 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=126.0.6478.127
-_pkgver=126.0.6478.126
-_commit=f40a60d6ca738965161b25e5c8201382d929318a
+pkgver=127.0.6533.89
+_pkgver=127.0.6533.88
+_commit=2295ca7b5986f413c9b2c583953b96d1386497b9
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -38,10 +38,10 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         use-oauth2-client-switches-as-default.patch)
-sha256sums=('6040cf4b1fe7afc64552a801dbe68d49cd2a619f9acf14a8d57384cbd7c3f4c7'
+sha256sums=('61f0b41fa237922996c995b089df58117a7459b4c294d17e6f1cd2c6a7d2095e'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            '09ef9706a148aa6771baedd17e60a718a4ae2af8bc5acfe65d3fbdeda07aceec'
-            '3ec1cadbb55cf66cc51f0421eace324a88836ee2d982b945b8f67a3f131b0924'
+            '40b70de6f5bc98ad14cdd6f6e06b5b52997c4639ba4a83a6490b82dc64231836'
+            'd25f5c89d3453b475ccb35b2e270c3fce18540304b5f1f5a3d5aba8a80e4a8ad'
             '474d900145ae6561220b550f1360fdc5c33e46b49e411e42d40799758a9b9565'
             '75f9c3ccdcc914d029ddcc5ca181df90177db35a343bf44ff541ff127bcea43d'
             'b3de01b7df227478687d7517f61a777450dca765756002c80c4915f271e2d961'
@@ -125,6 +125,8 @@ prepare() {
   rm -f Keyboard-protection-flag.patch
   # Remove bundled ABP
   find . -iname "*eyeo*.patch" -type f -delete
+  # Replace absl::optional with std variant
+  sed -i 's/absl::optional/std::optional/' Add-a-proxy-configuration-page.patch
   popd
 
   for patch in $(cat $srcdir/cromite-$pkgver-$_commit/build/cromite_patches_list.txt); do
