@@ -4,10 +4,10 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=127.0.6533.94
-_pkgver=127.0.6533.93
-_chrome_ver=127.0.6533.88
-_commit=5fe9b924075b8c565742b4844362e71aaa9ec0d8
+pkgver=127.0.6533.103
+_pkgver=127.0.6533.102
+_chrome_ver=127.0.6533.99
+_commit=667d85d6eb35d8e2fe27b1ed3091ce4714eab4c8
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -41,8 +41,8 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         use-oauth2-client-switches-as-default.patch)
 sha256sums=('61f0b41fa237922996c995b089df58117a7459b4c294d17e6f1cd2c6a7d2095e'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            'bfbf43cfb237d631a5b15371692fccbfc66f51535c874af1d0db76a276dd3afd'
-            'd25f5c89d3453b475ccb35b2e270c3fce18540304b5f1f5a3d5aba8a80e4a8ad'
+            'c2a569ffb1ad23c668c15f21b2905f6b6925d8a60cc052aa8951388a14da31c6'
+            'a4c18b49a8b80bf5e27c5911994a13446ff77444c62575a125b7b0b5bfeccd58'
             '474d900145ae6561220b550f1360fdc5c33e46b49e411e42d40799758a9b9565'
             '75f9c3ccdcc914d029ddcc5ca181df90177db35a343bf44ff541ff127bcea43d'
             'b3de01b7df227478687d7517f61a777450dca765756002c80c4915f271e2d961'
