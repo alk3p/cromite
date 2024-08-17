@@ -35,7 +35,6 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         https://github.com/uazo/cromite/archive/refs/tags/v$pkgver-$_commit.tar.gz
         https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_chrome_ver-1_amd64.deb
         widevine-revision.patch
-        chromium-browser-ui-missing-deps.patch
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         use-oauth2-client-switches-as-default.patch)
@@ -44,7 +43,6 @@ sha256sums=('61f0b41fa237922996c995b089df58117a7459b4c294d17e6f1cd2c6a7d2095e'
             'c2a569ffb1ad23c668c15f21b2905f6b6925d8a60cc052aa8951388a14da31c6'
             'a4c18b49a8b80bf5e27c5911994a13446ff77444c62575a125b7b0b5bfeccd58'
             '474d900145ae6561220b550f1360fdc5c33e46b49e411e42d40799758a9b9565'
-            '75f9c3ccdcc914d029ddcc5ca181df90177db35a343bf44ff541ff127bcea43d'
             'b3de01b7df227478687d7517f61a777450dca765756002c80c4915f271e2d961'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
             'a9b417b96daec33c9059065e15b3a92ae1bf4b59f89d353659b335d9e0379db6')
@@ -67,7 +65,7 @@ declare -gA _system_libs=(
   [icu]=icu
   #[jsoncpp]=jsoncpp  # needs libstdc++
   #[libaom]=aom
-  #[libavif]=libavif  # needs https://github.com/AOMediaCodec/libavif/commit/5410b23f76
+  #[libavif]=libavif  # needs -DAVIF_ENABLE_EXPERIMENTAL_GAIN_MAP=ON
   [libdrm]=
   [libjpeg]=libjpeg
   [libpng]=libpng
@@ -137,9 +135,6 @@ prepare() {
 
   # Widevine fixes from Debian
   patch -Np1 -i $srcdir/widevine-revision.patch
-
-  # https://issues.chromium.org/issues/351157339
-  patch -Np1 -i $srcdir/chromium-browser-ui-missing-deps.patch
 
   # Allow libclang_rt.builtins from compiler-rt >= 16 to be used
   patch -Np1 -i $srcdir/compiler-rt-adjust-paths.patch
