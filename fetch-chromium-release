@@ -83,8 +83,6 @@ src/build/util/lastchange.py \
   -s src/third_party/dawn --revision src/gpu/webgpu/DAWN_VERSION
 src/tools/update_pgo_profiles.py --target=linux update \
   --gs-url-base=chromium-optimization-profiles/pgo_profiles
-download_from_google_storage.py --no_resume --extract --no_auth \
-  --bucket chromium-nodejs -s src/third_party/node/node_modules.tar.gz.sha1
 
 find src/third_party/jdk/current -type f -delete
 
