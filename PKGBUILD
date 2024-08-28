@@ -4,10 +4,10 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=128.0.6613.40
-_pkgver=128.0.6613.36
-_chrome_ver=127.0.6533.119
-_commit=12f9ca014fe945a984d4508dc432a64afb1e15dc
+pkgver=128.0.6613.88
+_pkgver=128.0.6613.84
+_chrome_ver=${_pkgver}
+_commit=389b5eaa491becda466f20909e19fbc38ebeb3e7
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -38,10 +38,10 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         use-oauth2-client-switches-as-default.patch)
-sha256sums=('3e9bdb12600e7f03cda9e0e60df027227752f339a45e680ca1a689e595c7d7a8'
+sha256sums=('9297c1e1dc9310534f6a48f90eacc2eac1d964ac3c827dc0798594e8a2742dc4'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            'c9af31ce323df1f8c6bf89f405ce58ae469833cc1c90835343856cf649774641'
-            '93daec10b02d38574b4a2d5d3935782ebec4d94bb9b11d7f18e2fd0560ea665e'
+            '4e705710bbff70a8ce8e28ff31e6d7f0d007a7d251a8252eb94f49fd04695358'
+            'e21001b470eaffc9483fa61ba54d5525d9a064d98b376a9bd1530f630dddb018'
             '474d900145ae6561220b550f1360fdc5c33e46b49e411e42d40799758a9b9565'
             'b3de01b7df227478687d7517f61a777450dca765756002c80c4915f271e2d961'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
