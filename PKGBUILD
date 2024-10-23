@@ -4,10 +4,10 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=129.0.6668.71
-_pkgver=129.0.6668.70
-_chrome_ver=${_pkgver}
-_commit=385912cca32ce2d15a3e295f79d5c4dc3a6f7785
+pkgver=130.0.6723.67
+_pkgver=130.0.6723.66
+_chrome_ver=130.0.6723.69
+_commit=4ea5bf603a6c721f35dce9edcab04ff4f03ecbaa
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -38,10 +38,10 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         use-oauth2-client-switches-as-default.patch)
-sha256sums=('094ddec3774b54feb04dcfb020e61766de16feabb04850d73ef82e38c4bbf2b5'
+sha256sums=('c5360dc29f19643f74da13c336c571715ad1f505adbe556dd482a94aeb8d30b2'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            'e4297515dac26f79fd0efdba99b5a99b3fc615a6c638d75eae781715ebe78d92'
-            '05ee9fbc7cb1186de99b95122153ba4804d45511b0a80d84dcbe9e175efbf25b'
+            '64f4c93120471021d8829da484f1aef7fab9827a23e93d8074d99f579a178955'
+            '3212da3d5d87b78658b26aece07598b6ffc816a0ff990559c00fc856765f343f'
             '474d900145ae6561220b550f1360fdc5c33e46b49e411e42d40799758a9b9565'
             'b3de01b7df227478687d7517f61a777450dca765756002c80c4915f271e2d961'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
@@ -49,7 +49,6 @@ sha256sums=('094ddec3774b54feb04dcfb020e61766de16feabb04850d73ef82e38c4bbf2b5'
 
 if (( _manual_clone )); then
   source[0]=fetch-chromium-release
-  sha256sums[0]=c5360dc29f19643f74da13c336c571715ad1f505adbe556dd482a94aeb8d30b2
 fi
 
 # Possible replacements are listed in build/linux/unbundle/replace_gn_files.py
