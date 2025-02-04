@@ -4,10 +4,9 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=130.0.6723.67
-_pkgver=130.0.6723.66
-_chrome_ver=130.0.6723.69
-_commit=4ea5bf603a6c721f35dce9edcab04ff4f03ecbaa
+pkgver=132.0.6834.163
+_pkgver=132.0.6834.159
+_commit=ae296a42b9b1412a54aca8635affabd26ea8ce1e
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -33,22 +32,23 @@ options=('!lto') # Chromium adds its own flags for ThinLTO
 source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$_pkgver.tar.xz
         https://github.com/foutrelis/chromium-launcher/archive/v$_launcher_ver/chromium-launcher-$_launcher_ver.tar.gz
         https://github.com/uazo/cromite/archive/refs/tags/v$pkgver-$_commit.tar.gz
-        https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_chrome_ver-1_amd64.deb
+        https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_pkgver-1_amd64.deb
         widevine-revision.patch
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         use-oauth2-client-switches-as-default.patch)
-sha256sums=('c5360dc29f19643f74da13c336c571715ad1f505adbe556dd482a94aeb8d30b2'
+sha256sums=('564cc8a258b16d1c6151721a2a72e43ba80642326b33aa79439bba354e686068'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            '64f4c93120471021d8829da484f1aef7fab9827a23e93d8074d99f579a178955'
-            '3212da3d5d87b78658b26aece07598b6ffc816a0ff990559c00fc856765f343f'
+            'd4ef7fdab461e5431158a02b1a5d199e9f02fddee597c547089cd27a1f19d635'
+            'e54ef927fd5194e1feb705f05269405b81f47a5e2d9a001c7bc8df05fea0331c'
             '474d900145ae6561220b550f1360fdc5c33e46b49e411e42d40799758a9b9565'
             'b3de01b7df227478687d7517f61a777450dca765756002c80c4915f271e2d961'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
-            'a9b417b96daec33c9059065e15b3a92ae1bf4b59f89d353659b335d9e0379db6')
+            '6de648d449159dd579e42db304aca0a36243f2ac1538f8d030473afbbc8ff475')
 
 if (( _manual_clone )); then
   source[0]=fetch-chromium-release
+  sha256sums[0]=c5360dc29f19643f74da13c336c571715ad1f505adbe556dd482a94aeb8d30b2
 fi
 
 # Possible replacements are listed in build/linux/unbundle/replace_gn_files.py
@@ -66,7 +66,7 @@ declare -gA _system_libs=(
   #[libaom]=aom
   #[libavif]=libavif  # needs -DAVIF_ENABLE_EXPERIMENTAL_GAIN_MAP=ON
   [libdrm]=
-  [libjpeg]=libjpeg
+  [libjpeg]=libjpeg-turbo
   [libpng]=libpng
   #[libvpx]=libvpx
   [libwebp]=libwebp
@@ -135,6 +135,8 @@ prepare() {
   # Widevine fixes from Debian
   patch -Np1 -i $srcdir/widevine-revision.patch
 
+  # Upstream fixes
+
   # Allow libclang_rt.builtins from compiler-rt >= 16 to be used
   patch -Np1 -i $srcdir/compiler-rt-adjust-paths.patch
 
@@ -145,11 +147,6 @@ prepare() {
   mkdir -p third_party/node/linux/node-linux-x64/bin
   ln -sf /usr/bin/node third_party/node/linux/node-linux-x64/bin/
   ln -sf /usr/bin/java third_party/jdk/current/bin/
-
-  # test deps are broken for ui/lens with system ICU
-  # "//third_party/icu:icuuc_public" (taken from Gentoo ebuild)
-  sed -i '/source_set("unit_tests") {/,/}/d' chrome/browser/ui/lens/BUILD.gn
-  sed -i '/lens:unit_tests/d' chrome/test/BUILD.gn components/BUILD.gn
 
   # Remove bundled libraries for which we will use the system copies; this
   # *should* do what the remove_bundled_libraries.py script does, with the
@@ -219,7 +216,7 @@ build() {
       'clang_base_path="/usr"'
       'clang_use_chrome_plugins=false'
       "clang_version=\"$_clang_version\""
-      'chrome_pgo_phase=0' # needs newer clang to read the bundled PGO profile
+      #'chrome_pgo_phase=0' # needs newer clang to read the bundled PGO profile
     )
 
     # Allow the use of nightly features with stable Rust compiler
