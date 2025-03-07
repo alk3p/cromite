@@ -4,9 +4,9 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=132.0.6834.163
-_pkgver=132.0.6834.159
-_commit=ae296a42b9b1412a54aca8635affabd26ea8ce1e
+pkgver=134.0.6998.39
+_pkgver=134.0.6998.35
+_commit=8685e1c28323ae3e01d2636e690ff82a0c1600fe
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -37,14 +37,14 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         use-oauth2-client-switches-as-default.patch)
-sha256sums=('564cc8a258b16d1c6151721a2a72e43ba80642326b33aa79439bba354e686068'
+sha256sums=('d77f09bfa9bda8bbc4638ead83339d5ec52e39032c5a7047060dfdf94b767be7'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            'd4ef7fdab461e5431158a02b1a5d199e9f02fddee597c547089cd27a1f19d635'
-            'e54ef927fd5194e1feb705f05269405b81f47a5e2d9a001c7bc8df05fea0331c'
+            'f8c7d7fe8a9d3239d304a93d9df64f04bbd677aa0f21de5075b03be5293aa671'
+            'f5bc9159c02a4a58204866084aa9e36bb6b7f2b677b8d482f47ad9998fb3ca30'
             '474d900145ae6561220b550f1360fdc5c33e46b49e411e42d40799758a9b9565'
             'b3de01b7df227478687d7517f61a777450dca765756002c80c4915f271e2d961'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
-            '6de648d449159dd579e42db304aca0a36243f2ac1538f8d030473afbbc8ff475')
+            'e6da901e4d0860058dc2f90c6bbcdc38a0cf4b0a69122000f62204f24fa7e374')
 
 if (( _manual_clone )); then
   source[0]=fetch-chromium-release
@@ -61,7 +61,7 @@ declare -gA _system_libs=(
   [fontconfig]=fontconfig
   [freetype]=freetype2
   [harfbuzz-ng]=harfbuzz
-  [icu]=icu
+  #[icu]=icu
   #[jsoncpp]=jsoncpp  # needs libstdc++
   #[libaom]=aom
   #[libavif]=libavif  # needs -DAVIF_ENABLE_EXPERIMENTAL_GAIN_MAP=ON
@@ -148,6 +148,19 @@ prepare() {
   ln -sf /usr/bin/node third_party/node/linux/node-linux-x64/bin/
   ln -sf /usr/bin/java third_party/jdk/current/bin/
 
+  if (( !_system_clang )); then
+    # Use prebuilt rust as system rust cannot be used due to the error:
+    #   error: the option `Z` is only accepted on the nightly compiler
+    ./tools/rust/update_rust.py
+
+    # To link to rust libraries we need to compile with prebuilt clang
+    ./tools/clang/scripts/update.py
+  elif ! find /usr/lib/rustlib | grep -q adler2; then
+    # Rust 1.86 ships adler2 but we need to change it to adler when
+    # using older Rust versions (idea for this borrowed from Gentoo)
+    sed -i 's/adler2/adler/' build/rust/std/BUILD.gn
+  fi
+
   # Remove bundled libraries for which we will use the system copies; this
   # *should* do what the remove_bundled_libraries.py script does, with the
   # added benefit of not having to list all the remaining libraries
@@ -197,6 +210,7 @@ build() {
     'use_sysroot=false'
     'use_system_libffi=true'
     'enable_widevine=true'
+    'use_qt5=true'
     'use_qt6=true'
     'moc_qt6_path="/usr/lib/qt6"'
     "google_api_key=\"$_google_api_key\""
@@ -288,14 +302,15 @@ package() {
     "$pkgdir/usr/share/applications/cromite.desktop" \
     "$pkgdir/usr/share/man/man1/cromite.1"
 
-  install -Dm644 chrome/installer/linux/common/chromium-browser/chromium-browser.appdata.xml \
-    "$pkgdir/usr/share/metainfo/cromite.appdata.xml"
-  sed -ni \
-    -e 's/chromium-browser\.desktop/cromite.desktop/' \
-    -e '/<update_contact>/d' \
-    -e '/<p>/N;/<p>\n.*\(We invite\|Chromium supports Vorbis\)/,/<\/p>/d' \
-    -e '/^<?xml/,$p' \
-    "$pkgdir/usr/share/metainfo/cromite.appdata.xml"
+  # Fill in common Chrome/Chromium AppData template with Chromium info
+  (
+    tmpl_file=chrome/installer/linux/common/appdata.xml.template
+    info_file=chrome/installer/linux/common/chromium-browser.info
+    . $info_file; PACKAGE=cromite
+    export $(grep -o '^[A-Z_]*' $info_file)
+    sed -E -e 's/@@([A-Z_]*)@@/\${\1}/g' -e '/<update_contact>/d' $tmpl_file | envsubst
+  ) \
+  | install -Dm644 /dev/stdin "$pkgdir/usr/share/metainfo/cromite.appdata.xml"
 
   local toplevel_files=(
     chrome_100_percent.pak
