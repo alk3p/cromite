@@ -4,9 +4,9 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=134.0.6998.39
-_pkgver=134.0.6998.35
-_commit=8685e1c28323ae3e01d2636e690ff82a0c1600fe
+pkgver=134.0.6998.89
+_pkgver=134.0.6998.88
+_commit=dd884d1d5afd250e4fbf8364b9082f2ef61197f9
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -29,19 +29,23 @@ optdepends=('pipewire: WebRTC desktop sharing under Wayland'
             'upower: Battery Status API support')
 install="${pkgname}.install"
 options=('!lto') # Chromium adds its own flags for ThinLTO
-source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$_pkgver.tar.xz
+source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$_pkgver-lite.tar.xz
         https://github.com/foutrelis/chromium-launcher/archive/v$_launcher_ver/chromium-launcher-$_launcher_ver.tar.gz
-        https://github.com/uazo/cromite/archive/refs/tags/v$pkgver-$_commit.tar.gz
+        https://github.com/uazo/cromite/archive/$_commit.tar.gz
         https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_pkgver-1_amd64.deb
         widevine-revision.patch
+        webrtc-fix-build-with-pipewire-1.4.patch
+        skia-only-call-format_message-when-needed.patch
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         use-oauth2-client-switches-as-default.patch)
-sha256sums=('d77f09bfa9bda8bbc4638ead83339d5ec52e39032c5a7047060dfdf94b767be7'
+sha256sums=('aa079fa2a8ff15f1a8528d67f5c310cd7da41d6c9e607a38d57b0e5a11169d59'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            'f8c7d7fe8a9d3239d304a93d9df64f04bbd677aa0f21de5075b03be5293aa671'
-            'f5bc9159c02a4a58204866084aa9e36bb6b7f2b677b8d482f47ad9998fb3ca30'
+            'cfe888340b22c4211f5607880ff3923a6128a67301043e89333e50b081cabb2c'
+            'df557edb3d24d8dcaff9557d80733b42afb6626685200d3f34a3b6f528065cad'
             '87f0cb23f04f174f4700fe5aeb5651d2ec63590c00ce82bf7932b00aafd0d9b1'
+            '74a2d428f7f09132c4a923e816a5a9333803f842003d650cd4a95a35e5457253'
+            '271c7a767005b09e212808cfef7261dca00ea28ba7b808f69c3b5b9f202511d1'
             'b3de01b7df227478687d7517f61a777450dca765756002c80c4915f271e2d961'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
             'e6da901e4d0860058dc2f90c6bbcdc38a0cf4b0a69122000f62204f24fa7e374')
@@ -110,7 +114,7 @@ prepare() {
     third_party/blink/renderer/core/xml/parser/xml_document_parser.cc \
     third_party/libxml/chromium/*.cc
 
-  pushd $srcdir/cromite-$pkgver-$_commit/build/patches
+  pushd $srcdir/cromite-$_commit/build/patches
   # Enable reverse image search
   rm -f WIN-Disable-search-for-image.patch
   # Enable Google {Account, Translate}
@@ -125,10 +129,10 @@ prepare() {
   find . -iname "*eyeo*.patch" -type f -delete
   popd
 
-  for patch in $(cat $srcdir/cromite-$pkgver-$_commit/build/cromite_patches_list.txt); do
-    if [ -f $srcdir/cromite-$pkgver-$_commit/build/patches/$patch ]; then
+  for patch in $(cat $srcdir/cromite-$_commit/build/cromite_patches_list.txt); do
+    if [ -f $srcdir/cromite-$_commit/build/patches/$patch ]; then
       echo "Applying: $patch"
-      git apply $srcdir/cromite-$pkgver-$_commit/build/patches/$patch
+      git apply $srcdir/cromite-$_commit/build/patches/$patch
     fi
   done
 
@@ -136,6 +140,8 @@ prepare() {
   patch -Np1 -i $srcdir/widevine-revision.patch
 
   # Upstream fixes
+  patch -Np1 -d third_party/webrtc < $srcdir/webrtc-fix-build-with-pipewire-1.4.patch
+  patch -Np1 -d third_party/skia < $srcdir/skia-only-call-format_message-when-needed.patch
 
   # Allow libclang_rt.builtins from compiler-rt >= 16 to be used
   patch -Np1 -i $srcdir/compiler-rt-adjust-paths.patch
