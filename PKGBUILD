@@ -1,4 +1,4 @@
-# Maintainer: Evangelos Foutras <evangelos@foutrelis.com>
+# Maintainer: Evangelos Foutras <foutrelis@archlinux.org>
 # Contributor: Pierre Schmitz <pierre@archlinux.de>
 # Contributor: Jan "heftig" Steffens <jan.steffens@gmail.com>
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
@@ -52,7 +52,8 @@ sha256sums=('aa079fa2a8ff15f1a8528d67f5c310cd7da41d6c9e607a38d57b0e5a11169d59'
 
 if (( _manual_clone )); then
   source[0]=fetch-chromium-release
-  sha256sums[0]=c5360dc29f19643f74da13c336c571715ad1f505adbe556dd482a94aeb8d30b2
+  sha256sums[0]=b531ff057dff803dd0049cbb02a66bc8cc7475195dbab18b6e6740e5e2207c1c
+  makedepends+=('python-httplib2' 'python-pyparsing' 'python-six' 'npm' 'rsync')
 fi
 
 # Possible replacements are listed in build/linux/unbundle/replace_gn_files.py
@@ -115,6 +116,8 @@ prepare() {
     third_party/libxml/chromium/*.cc
 
   pushd $srcdir/cromite-$_commit/build/patches
+  # Restore default codecs
+  rm -f Enable-platform-aac-audio-and-h264-video.patch
   # Enable reverse image search
   rm -f WIN-Disable-search-for-image.patch
   # Enable Google {Account, Translate}
@@ -202,26 +205,38 @@ build() {
     export NM=$_clang_path/llvm-nm
   fi
 
-  local _flags=('target_os = "linux"')
-  _flags+=$(cat $srcdir/cromite-$pkgver-$_commit/build/cromite.gn_args)
-  _flags+=(
+  local _flags=(
     'custom_toolchain="//build/toolchain/linux/unbundle:default"'
     'host_toolchain="//build/toolchain/linux/unbundle:default"'
+    'is_official_build=true' # implies is_cfi=true on x86_64
     'symbol_level=0' # sufficient for backtraces on x86(_64)
     'treat_warnings_as_errors=false'
+    'disable_fieldtrial_testing_config=true'
     'blink_enable_generated_code_formatting=false'
+    'ffmpeg_branding="Chrome"'
+    'proprietary_codecs=true'
     'rtc_use_pipewire=true'
     'link_pulseaudio=true'
     'use_custom_libcxx=true' # https://github.com/llvm/llvm-project/issues/61705
     'use_sysroot=false'
     'use_system_libffi=true'
+    'enable_hangout_services_extension=true'
     'enable_widevine=true'
+    'enable_nacl=false'
     'use_qt5=true'
     'use_qt6=true'
     'moc_qt6_path="/usr/lib/qt6"'
     "google_api_key=\"$_google_api_key\""
     "google_default_client_id=\"$_google_default_client_id\""
     "google_default_client_secret=\"$_google_default_client_secret\""
+  )
+  _flags+=(
+    'enable_mdns=false'
+    'enable_reporting=false'
+    'is_component_build=false'
+    'enable_bound_session_credentials=false'
+    'use_rtti=false'
+    'chrome_pgo_phase=2'
   )
 
   if [[ -n ${_system_libs[icu]+set} ]]; then
@@ -325,7 +340,7 @@ package() {
     libqt5_shim.so
     libqt6_shim.so
     resources.pak
-    snapshot_blob.bin
+    v8_context_snapshot.bin
 
     # ANGLE
     libEGL.so

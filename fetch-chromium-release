@@ -84,6 +84,9 @@ src/build/util/lastchange.py \
 src/tools/update_pgo_profiles.py --target=linux update \
   --gs-url-base=chromium-optimization-profiles/pgo_profiles
 
+# https://gitlab.archlinux.org/archlinux/packaging/packages/electron32/-/issues/1
+src/third_party/node/update_npm_deps
+
 find src/third_party/jdk/current -type f -delete
 
 cd ..
