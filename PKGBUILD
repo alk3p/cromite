@@ -4,9 +4,8 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=134.0.6998.89
-_pkgver=134.0.6998.88
-_commit=dd884d1d5afd250e4fbf8364b9082f2ef61197f9
+pkgver=135.0.7049.52
+_commit=9609b54606287728228780ccd390a28c1f3a8bf0
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -29,23 +28,25 @@ optdepends=('pipewire: WebRTC desktop sharing under Wayland'
             'upower: Battery Status API support')
 install="${pkgname}.install"
 options=('!lto') # Chromium adds its own flags for ThinLTO
-source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$_pkgver-lite.tar.xz
+source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$pkgver-lite.tar.xz
         https://github.com/foutrelis/chromium-launcher/archive/v$_launcher_ver/chromium-launcher-$_launcher_ver.tar.gz
-        https://github.com/uazo/cromite/archive/$_commit.tar.gz
-        https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_pkgver-1_amd64.deb
+        https://github.com/uazo/cromite/archive/refs/tags/v$pkgver-$_commit.tar.gz
+        https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$pkgver-1_amd64.deb
         widevine-revision.patch
         webrtc-fix-build-with-pipewire-1.4.patch
         skia-only-call-format_message-when-needed.patch
+        add-more-CFI-suppressions-for-inline-PipeWire-functions.patch
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         use-oauth2-client-switches-as-default.patch)
-sha256sums=('aa079fa2a8ff15f1a8528d67f5c310cd7da41d6c9e607a38d57b0e5a11169d59'
+sha256sums=('bc07d4b8f8377a218a2f5b5c5ae8276535650b2a524706d4959ed54322874950'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            'cfe888340b22c4211f5607880ff3923a6128a67301043e89333e50b081cabb2c'
-            'df557edb3d24d8dcaff9557d80733b42afb6626685200d3f34a3b6f528065cad'
+            'd18a6ca14f31f1d01202ceb291ff601251c2f115bb01dd257de6be5edbfd2dc2'
+            '48b4709ba5ca827335c5486cf2757250248586adf21f77c7a0dda1f1dda0a6da'
             '87f0cb23f04f174f4700fe5aeb5651d2ec63590c00ce82bf7932b00aafd0d9b1'
             '74a2d428f7f09132c4a923e816a5a9333803f842003d650cd4a95a35e5457253'
             '271c7a767005b09e212808cfef7261dca00ea28ba7b808f69c3b5b9f202511d1'
+            'd3dd9b4132c9748b824f3dcf730ec998c0087438db902bc358b3c391658bebf5'
             'b3de01b7df227478687d7517f61a777450dca765756002c80c4915f271e2d961'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
             'e6da901e4d0860058dc2f90c6bbcdc38a0cf4b0a69122000f62204f24fa7e374')
@@ -100,9 +101,9 @@ prepare() {
   bsdtar -x --strip-components 4 -f data.tar.xz opt/google/chrome/WidevineCdm
 
   if (( _manual_clone )); then
-    ./fetch-chromium-release $_pkgver
+    ./fetch-chromium-release $pkgver
   fi
-  cd chromium-$_pkgver
+  cd chromium-$pkgver
 
   # Allow building against system libraries in official builds
   sed -i 's/OFFICIAL_BUILD/GOOGLE_CHROME_BUILD/' \
@@ -145,6 +146,7 @@ prepare() {
   # Upstream fixes
   patch -Np1 -d third_party/webrtc < $srcdir/webrtc-fix-build-with-pipewire-1.4.patch
   patch -Np1 -d third_party/skia < $srcdir/skia-only-call-format_message-when-needed.patch
+  patch -Np1 -i $srcdir/add-more-CFI-suppressions-for-inline-PipeWire-functions.patch
 
   # Allow libclang_rt.builtins from compiler-rt >= 16 to be used
   patch -Np1 -i $srcdir/compiler-rt-adjust-paths.patch
@@ -190,7 +192,7 @@ prepare() {
 build() {
   make CHROMIUM_NAME=cromite -C chromium-launcher-$_launcher_ver
 
-  cd chromium-$_pkgver
+  cd chromium-$pkgver
 
   if (( _system_clang )); then
     export CC=clang
@@ -306,7 +308,7 @@ package() {
   install -Dm644 LICENSE \
     "$pkgdir/usr/share/licenses/cromite/LICENSE.launcher"
 
-  cd ../chromium-$_pkgver
+  cd ../chromium-$pkgver
 
   install -D out/Release/chrome "$pkgdir/usr/lib/cromite/cromite"
   # install -D out/Release/chromedriver.unstripped "$pkgdir/usr/bin/chromedriver"
