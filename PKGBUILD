@@ -4,8 +4,9 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=135.0.7049.52
-_commit=9609b54606287728228780ccd390a28c1f3a8bf0
+pkgver=135.0.7049.115
+_pkgver=135.0.7049.114
+_commit=555f445aa033f78991d2df3544fd44b1de0f4340
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -30,8 +31,8 @@ install="${pkgname}.install"
 options=('!lto') # Chromium adds its own flags for ThinLTO
 source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$pkgver-lite.tar.xz
         https://github.com/foutrelis/chromium-launcher/archive/v$_launcher_ver/chromium-launcher-$_launcher_ver.tar.gz
-        https://github.com/uazo/cromite/archive/refs/tags/v$pkgver-$_commit.tar.gz
-        https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$pkgver-1_amd64.deb
+        https://github.com/uazo/cromite/archive/$_commit.tar.gz
+        https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_pkgver-1_amd64.deb
         widevine-revision.patch
         webrtc-fix-build-with-pipewire-1.4.patch
         skia-only-call-format_message-when-needed.patch
@@ -39,15 +40,15 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         use-oauth2-client-switches-as-default.patch)
-sha256sums=('bc07d4b8f8377a218a2f5b5c5ae8276535650b2a524706d4959ed54322874950'
+sha256sums=('0d22d2b7fd549ec5bfad9b6b228c75254cbbd257beb69c7ef5a36c252816a730'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            'd18a6ca14f31f1d01202ceb291ff601251c2f115bb01dd257de6be5edbfd2dc2'
-            '48b4709ba5ca827335c5486cf2757250248586adf21f77c7a0dda1f1dda0a6da'
+            'a3a0e8e3bd1facc4d22a1c83c4e5d99b8ef53108e82910ce9cd49115d0319015'
+            'd58757b65118ea27323cc9e0bdfb612dd85268c19ba48d2589f16465265cd9ae'
             '87f0cb23f04f174f4700fe5aeb5651d2ec63590c00ce82bf7932b00aafd0d9b1'
             '74a2d428f7f09132c4a923e816a5a9333803f842003d650cd4a95a35e5457253'
             '271c7a767005b09e212808cfef7261dca00ea28ba7b808f69c3b5b9f202511d1'
             'd3dd9b4132c9748b824f3dcf730ec998c0087438db902bc358b3c391658bebf5'
-            'b3de01b7df227478687d7517f61a777450dca765756002c80c4915f271e2d961'
+            'b9502b311e4d6fbc9b15226f32b36a3ef968eeec338eec4306597e524d35e51b'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
             'e6da901e4d0860058dc2f90c6bbcdc38a0cf4b0a69122000f62204f24fa7e374')
 
@@ -166,10 +167,6 @@ prepare() {
 
     # To link to rust libraries we need to compile with prebuilt clang
     ./tools/clang/scripts/update.py
-  elif ! find /usr/lib/rustlib | grep -q adler2; then
-    # Rust 1.86 ships adler2 but we need to change it to adler when
-    # using older Rust versions (idea for this borrowed from Gentoo)
-    sed -i 's/adler2/adler/' build/rust/std/BUILD.gn
   fi
 
   # Remove bundled libraries for which we will use the system copies; this
