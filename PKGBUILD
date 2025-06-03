@@ -134,6 +134,8 @@ prepare() {
   rm -f Keyboard-protection-flag.patch
   # Remove bundled ABP
   find . -iname "*eyeo*.patch" -type f -delete
+  # Needs rebasing since 135
+  rm -f Android-fonts-fingerprinting-mitigation.patch
   popd
 
   for patch in $(cat $srcdir/cromite-$_commit/build/cromite_patches_list.txt); do
@@ -147,7 +149,9 @@ prepare() {
   patch -Np1 -i $srcdir/widevine-revision.patch
 
   # Upstream fixes
-  patch -Np1 -i $srcdir/disable-clang-fextend-variable-liveness.patch
+  # patch -Np1 -i $srcdir/disable-clang-fextend-variable-liveness.patch
+  # No, I have no idea why this patch fails to apply even after a rebase.
+  sed -i "/fextend-variable-liveness/d" build/config/compiler/BUILD.gn
   patch -d third_party/pdfium -Np1 < $srcdir/pdfium-fix-build-with-system-libpng.patch
 
   # Fixes from Gentoo
@@ -272,8 +276,8 @@ build() {
   fi
 
   # ThinLTO is enabled by default
-  CFLAGS+='   -march=native'
-  CXXFLAGS+=' -march=native'
+  CFLAGS+='   -march=x86-64-v3 -O3'
+  CXXFLAGS+=' -march=x86-64-v3 -O3'
 
   # Facilitate deterministic builds (taken from build/config/compiler/BUILD.gn)
   CFLAGS+='   -Wno-builtin-macro-redefined'
