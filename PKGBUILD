@@ -4,9 +4,9 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=135.0.7049.115
-_pkgver=135.0.7049.114
-_commit=555f445aa033f78991d2df3544fd44b1de0f4340
+pkgver=137.0.7151.72
+_pkgver=137.0.7151.68
+_commit=bc5da626a17572828f2c6581eb89ad60f914b2a1
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -34,22 +34,24 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         https://github.com/uazo/cromite/archive/$_commit.tar.gz
         https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_pkgver-1_amd64.deb
         widevine-revision.patch
-        webrtc-fix-build-with-pipewire-1.4.patch
-        skia-only-call-format_message-when-needed.patch
-        add-more-CFI-suppressions-for-inline-PipeWire-functions.patch
+        disable-clang-fextend-variable-liveness.patch
+        pdfium-fix-build-with-system-libpng.patch
+        chromium-136-drop-nodejs-ver-check.patch
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
+        disable-clang-warning-suppression-flag.patch
         use-oauth2-client-switches-as-default.patch)
-sha256sums=('0d22d2b7fd549ec5bfad9b6b228c75254cbbd257beb69c7ef5a36c252816a730'
+sha256sums=('1502ec0d39de352fa669ef1e0c0d86c267d1f0b0d96449b62d19fb3b53d41d50'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            'a3a0e8e3bd1facc4d22a1c83c4e5d99b8ef53108e82910ce9cd49115d0319015'
-            'd58757b65118ea27323cc9e0bdfb612dd85268c19ba48d2589f16465265cd9ae'
+            'ba88a4219a28b95725a98992cc49b864b1c2220aa392a196bb70034ffc9146f3'
+            '4c127a5ce9f1acfffe1a7776637fda61b446e4df9bedd292feef3464ae04f8c3'
             '87f0cb23f04f174f4700fe5aeb5651d2ec63590c00ce82bf7932b00aafd0d9b1'
-            '74a2d428f7f09132c4a923e816a5a9333803f842003d650cd4a95a35e5457253'
-            '271c7a767005b09e212808cfef7261dca00ea28ba7b808f69c3b5b9f202511d1'
-            'd3dd9b4132c9748b824f3dcf730ec998c0087438db902bc358b3c391658bebf5'
-            'b9502b311e4d6fbc9b15226f32b36a3ef968eeec338eec4306597e524d35e51b'
+            '2d98a7a6a553fb5c17c4bfe36f011410f377afa12a6a818ba36543dc9a258f4a'
+            'de3222b13d3a49628a00fd74acae633912b830f78c2de452d3bdff3d0e42026d'
+            '32f0080282fc0b2795a342bf17fcb3db4028c5d02619c7e304222230ba99d5fe'
+            'ffa7412837c7b11616dc8ec89c4b4dbaa63adea3e31bdc8a01c46704315aa534'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
+            'd6f3914c6adadaf061e7e2b1430c96d32b0cad05244b5cfaf58cf5344006a169'
             'e6da901e4d0860058dc2f90c6bbcdc38a0cf4b0a69122000f62204f24fa7e374')
 
 if (( _manual_clone )); then
@@ -145,15 +147,20 @@ prepare() {
   patch -Np1 -i $srcdir/widevine-revision.patch
 
   # Upstream fixes
-  patch -Np1 -d third_party/webrtc < $srcdir/webrtc-fix-build-with-pipewire-1.4.patch
-  patch -Np1 -d third_party/skia < $srcdir/skia-only-call-format_message-when-needed.patch
-  patch -Np1 -i $srcdir/add-more-CFI-suppressions-for-inline-PipeWire-functions.patch
+  patch -Np1 -i $srcdir/disable-clang-fextend-variable-liveness.patch
+  patch -d third_party/pdfium -Np1 < $srcdir/pdfium-fix-build-with-system-libpng.patch
+
+  # Fixes from Gentoo
+  patch -Np1 -i $srcdir/chromium-136-drop-nodejs-ver-check.patch
 
   # Allow libclang_rt.builtins from compiler-rt >= 16 to be used
   patch -Np1 -i $srcdir/compiler-rt-adjust-paths.patch
 
   # Increase _FORTIFY_SOURCE level to match Arch's default flags
   patch -Np1 -i $srcdir/increase-fortify-level.patch
+
+  # Disable usage of --warning-suppression-mappings flag which needs clang 20
+  patch -Np1 -i $srcdir/disable-clang-warning-suppression-flag.patch
 
   # Link to system tools required by the build
   mkdir -p third_party/node/linux/node-linux-x64/bin
