@@ -4,9 +4,10 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=137.0.7151.72
-_pkgver=137.0.7151.68
-_commit=bc5da626a17572828f2c6581eb89ad60f914b2a1
+pkgver=138.0.7204.97
+_pkgver=138.0.7204.96
+_chrome_ver=138.0.7204.92
+_commit=418943de425329115e0783375c12ee5aec36e2b6
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -29,29 +30,23 @@ optdepends=('pipewire: WebRTC desktop sharing under Wayland'
             'upower: Battery Status API support')
 install="${pkgname}.install"
 options=('!lto') # Chromium adds its own flags for ThinLTO
-source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$pkgver-lite.tar.xz
+source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$_pkgver-lite.tar.xz
         https://github.com/foutrelis/chromium-launcher/archive/v$_launcher_ver/chromium-launcher-$_launcher_ver.tar.gz
-        https://github.com/uazo/cromite/archive/$_commit.tar.gz
-        https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_pkgver-1_amd64.deb
+        https://github.com/uazo/cromite/archive/refs/tags/v$pkgver-$_commit.tar.gz
+        https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_chrome_ver-1_amd64.deb
         widevine-revision.patch
-        disable-clang-fextend-variable-liveness.patch
-        pdfium-fix-build-with-system-libpng.patch
-        chromium-136-drop-nodejs-ver-check.patch
+        chromium-138-nodejs-version-check.patch
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
-        disable-clang-warning-suppression-flag.patch
         use-oauth2-client-switches-as-default.patch)
-sha256sums=('1502ec0d39de352fa669ef1e0c0d86c267d1f0b0d96449b62d19fb3b53d41d50'
+sha256sums=('d91365d78215faf17654288b606eda0ae9c4c7dc44f77b8f9a49851d9c1fc648'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            'ba88a4219a28b95725a98992cc49b864b1c2220aa392a196bb70034ffc9146f3'
-            '4c127a5ce9f1acfffe1a7776637fda61b446e4df9bedd292feef3464ae04f8c3'
+            'eb71ea0143414e399bf68a260960b7ac34e6b838564faee507fc591658950077'
+            'f4769422f244c3a3ea8a7127a5a9bf0e1e7ee973c9da8bbe8fc25f85cee777f1'
             '87f0cb23f04f174f4700fe5aeb5651d2ec63590c00ce82bf7932b00aafd0d9b1'
-            '2d98a7a6a553fb5c17c4bfe36f011410f377afa12a6a818ba36543dc9a258f4a'
-            'de3222b13d3a49628a00fd74acae633912b830f78c2de452d3bdff3d0e42026d'
-            '32f0080282fc0b2795a342bf17fcb3db4028c5d02619c7e304222230ba99d5fe'
-            'ffa7412837c7b11616dc8ec89c4b4dbaa63adea3e31bdc8a01c46704315aa534'
+            '11a96ffa21448ec4c63dd5c8d6795a1998d8e5cd5a689d91aea4d2bdd13fb06e'
+            '913c49b886d512d41baff9384ba997fb7ac555a08564d6af08c2f2e255225dc2'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
-            'd6f3914c6adadaf061e7e2b1430c96d32b0cad05244b5cfaf58cf5344006a169'
             'e6da901e4d0860058dc2f90c6bbcdc38a0cf4b0a69122000f62204f24fa7e374')
 
 if (( _manual_clone )); then
@@ -104,9 +99,9 @@ prepare() {
   bsdtar -x --strip-components 4 -f data.tar.xz opt/google/chrome/WidevineCdm
 
   if (( _manual_clone )); then
-    ./fetch-chromium-release $pkgver
+    ./fetch-chromium-release $_pkgver
   fi
-  cd chromium-$pkgver
+  cd chromium-$_pkgver
 
   # Allow building against system libraries in official builds
   sed -i 's/OFFICIAL_BUILD/GOOGLE_CHROME_BUILD/' \
@@ -119,7 +114,7 @@ prepare() {
     third_party/blink/renderer/core/xml/parser/xml_document_parser.cc \
     third_party/libxml/chromium/*.cc
 
-  pushd $srcdir/cromite-$_commit/build/patches
+  pushd $srcdir/cromite-$pkgver-$_commit/build/patches
   # Restore default codecs
   rm -f Enable-platform-aac-audio-and-h264-video.patch
   # Enable reverse image search
@@ -138,10 +133,10 @@ prepare() {
   rm -f Android-fonts-fingerprinting-mitigation.patch
   popd
 
-  for patch in $(cat $srcdir/cromite-$_commit/build/cromite_patches_list.txt); do
-    if [ -f $srcdir/cromite-$_commit/build/patches/$patch ]; then
+  for patch in $(cat $srcdir/cromite-$pkgver-$_commit/build/cromite_patches_list.txt); do
+    if [ -f $srcdir/cromite-$pkgver-$_commit/build/patches/$patch ]; then
       echo "Applying: $patch"
-      git apply $srcdir/cromite-$_commit/build/patches/$patch
+      git apply $srcdir/cromite-$pkgver-$_commit/build/patches/$patch
     fi
   done
 
@@ -149,22 +144,15 @@ prepare() {
   patch -Np1 -i $srcdir/widevine-revision.patch
 
   # Upstream fixes
-  # patch -Np1 -i $srcdir/disable-clang-fextend-variable-liveness.patch
-  # No, I have no idea why this patch fails to apply even after a rebase.
-  sed -i "/fextend-variable-liveness/d" build/config/compiler/BUILD.gn
-  patch -d third_party/pdfium -Np1 < $srcdir/pdfium-fix-build-with-system-libpng.patch
 
   # Fixes from Gentoo
-  patch -Np1 -i $srcdir/chromium-136-drop-nodejs-ver-check.patch
+  patch -Np1 -i $srcdir/chromium-138-nodejs-version-check.patch
 
   # Allow libclang_rt.builtins from compiler-rt >= 16 to be used
   patch -Np1 -i $srcdir/compiler-rt-adjust-paths.patch
 
   # Increase _FORTIFY_SOURCE level to match Arch's default flags
   patch -Np1 -i $srcdir/increase-fortify-level.patch
-
-  # Disable usage of --warning-suppression-mappings flag which needs clang 20
-  patch -Np1 -i $srcdir/disable-clang-warning-suppression-flag.patch
 
   # Link to system tools required by the build
   mkdir -p third_party/node/linux/node-linux-x64/bin
@@ -200,7 +188,7 @@ prepare() {
 build() {
   make CHROMIUM_NAME=cromite -C chromium-launcher-$_launcher_ver
 
-  cd chromium-$pkgver
+  cd chromium-$_pkgver
 
   if (( _system_clang )); then
     export CC=clang
@@ -221,6 +209,7 @@ build() {
     'is_official_build=true' # implies is_cfi=true on x86_64
     'symbol_level=0' # sufficient for backtraces on x86(_64)
     'treat_warnings_as_errors=false'
+    'fatal_linker_warnings=false'
     'disable_fieldtrial_testing_config=true'
     'blink_enable_generated_code_formatting=false'
     'ffmpeg_branding="Chrome"'
@@ -316,7 +305,7 @@ package() {
   install -Dm644 LICENSE \
     "$pkgdir/usr/share/licenses/cromite/LICENSE.launcher"
 
-  cd ../chromium-$pkgver
+  cd ../chromium-$_pkgver
 
   install -D out/Release/chrome "$pkgdir/usr/lib/cromite/cromite"
   # install -D out/Release/chromedriver.unstripped "$pkgdir/usr/bin/chromedriver"
