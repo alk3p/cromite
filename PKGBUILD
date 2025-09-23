@@ -1,13 +1,14 @@
 # Maintainer: Evangelos Foutras <foutrelis@archlinux.org>
+# Maintainer: Christian Heusel <gromit@archlinux.org>
 # Contributor: Pierre Schmitz <pierre@archlinux.de>
 # Contributor: Jan "heftig" Steffens <jan.steffens@gmail.com>
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=138.0.7204.184
-_pkgver=138.0.7204.183
+pkgver=140.0.7339.186
+_pkgver=140.0.7339.185
 _chrome_ver=${_pkgver}
-_commit=0509d052981e047d6670967788a3e916c70fd4b9
+_commit=fde090c0d3690592570011055c980f1679d2b28d
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -20,7 +21,7 @@ depends=('gtk3' 'nss' 'alsa-lib' 'xdg-utils' 'libxss' 'libcups' 'libgcrypt'
          'ttf-liberation' 'systemd' 'dbus' 'libpulse' 'pciutils' 'libva'
          'libffi' 'desktop-file-utils' 'hicolor-icon-theme')
 makedepends=('python' 'gn' 'ninja' 'clang' 'lld' 'gperf' 'nodejs' 'pipewire'
-             'rust' 'rust-bindgen' 'qt5-base' 'qt6-base' 'java-runtime-headless'
+             'rust' 'rust-bindgen' 'qt6-base' 'java-runtime-headless'
              'git')
 optdepends=('pipewire: WebRTC desktop sharing under Wayland'
             'kdialog: support for native dialogs in Plasma'
@@ -36,18 +37,22 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_chrome_ver-1_amd64.deb
         widevine-revision.patch
         chromium-138-nodejs-version-check.patch
+        chromium-138-rust-1.86-mismatched_lifetime_syntaxes.patch
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
-        use-oauth2-client-switches-as-default.patch)
-sha256sums=('1a676378743c37859af0fc51e0bb7ccd4c43a8031751b0f9fa7f95798e6960f2'
+        use-oauth2-client-switches-as-default.patch
+        chromium-140.0.7339.41-rust.patch)
+sha256sums=('a7b9a8dd5ddd65fb756bf35fb9180fca26ec59e1d55bbb105e05483ff15135b8'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            '474c6f2d94b5a73a62a7a01dc3d68a6de350aa8d7cfbd580ba5228558d793580'
-            '1b175f1d4ea9b2438bd22feb98dee4c06b2e2d84e8b4bd66130e9157ba9f979d'
-            '87f0cb23f04f174f4700fe5aeb5651d2ec63590c00ce82bf7932b00aafd0d9b1'
+            '4b460f58a11368468bcad1da0d9f6ef052d2b2d2703238c5faada89023022491'
+            '70f01b0d57afaffbed0702e7f9b70f9901cd7cbae1f8e830deb0ca579a700763'
+            'e9f6c962dcc5bbef3120004de8f4b29b09f0f74d16a272c0a704ef485c52441a'
             '11a96ffa21448ec4c63dd5c8d6795a1998d8e5cd5a689d91aea4d2bdd13fb06e'
-            '913c49b886d512d41baff9384ba997fb7ac555a08564d6af08c2f2e255225dc2'
+            '5abc8611463b3097fc5ce58017ef918af8b70d616ad093b8b486d017d021bbdf'
+            '75681c815bb2a8c102f0d7af3a3790b5012adbbce38780716b257b7da2e1c3d5'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
-            'e6da901e4d0860058dc2f90c6bbcdc38a0cf4b0a69122000f62204f24fa7e374')
+            'e6da901e4d0860058dc2f90c6bbcdc38a0cf4b0a69122000f62204f24fa7e374'
+            '0eb47afd031188cf5a3f0502f3025a73a1799dfa52dff9906db5a3c2af24e2eb')
 
 if (( _manual_clone )); then
   source[0]=fetch-chromium-release
@@ -129,8 +134,9 @@ prepare() {
   rm -f Keyboard-protection-flag.patch
   # Remove bundled ABP
   find . -iname "*eyeo*.patch" -type f -delete
-  # Needs rebasing since 135
+  # Needs rebasing (?
   rm -f Android-fonts-fingerprinting-mitigation.patch
+  rm -f Android-Pixel-Perfect-Mode.patch
   popd
 
   for patch in $(cat $srcdir/cromite-$pkgver-$_commit/build/cromite_patches_list.txt); do
@@ -147,6 +153,10 @@ prepare() {
 
   # Fixes from Gentoo
   patch -Np1 -i $srcdir/chromium-138-nodejs-version-check.patch
+
+  # Fixes from NixOS
+  patch -Np1 -i $srcdir/chromium-138-rust-1.86-mismatched_lifetime_syntaxes.patch
+  patch -Np1 -i $srcdir/chromium-140.0.7339.41-rust.patch
 
   # Allow libclang_rt.builtins from compiler-rt >= 16 to be used
   patch -Np1 -i $srcdir/compiler-rt-adjust-paths.patch
@@ -222,7 +232,7 @@ build() {
     'enable_hangout_services_extension=true'
     'enable_widevine=true'
     'enable_nacl=false'
-    'use_qt5=true'
+    'use_qt5=false'
     'use_qt6=true'
     'moc_qt6_path="/usr/lib/qt6"'
     "google_api_key=\"$_google_api_key\""
@@ -250,7 +260,7 @@ build() {
       'clang_base_path="/usr"'
       'clang_use_chrome_plugins=false'
       "clang_version=\"$_clang_version\""
-      #'chrome_pgo_phase=0' # needs newer clang to read the bundled PGO profile
+      'chrome_pgo_phase=0' # needs newer clang to read the bundled PGO profile
     )
 
     # Allow the use of nightly features with stable Rust compiler
@@ -336,7 +346,6 @@ package() {
     chrome_100_percent.pak
     chrome_200_percent.pak
     chrome_crashpad_handler
-    libqt5_shim.so
     libqt6_shim.so
     resources.pak
     v8_context_snapshot.bin
