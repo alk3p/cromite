@@ -5,10 +5,10 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=140.0.7339.186
-_pkgver=140.0.7339.185
+pkgver=141.0.7390.55
+_pkgver=141.0.7390.54
 _chrome_ver=${_pkgver}
-_commit=fde090c0d3690592570011055c980f1679d2b28d
+_commit=b2824377c30847f42e00c6ace66d91fa516b5f51
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -22,7 +22,7 @@ depends=('gtk3' 'nss' 'alsa-lib' 'xdg-utils' 'libxss' 'libcups' 'libgcrypt'
          'libffi' 'desktop-file-utils' 'hicolor-icon-theme')
 makedepends=('python' 'gn' 'ninja' 'clang' 'lld' 'gperf' 'nodejs' 'pipewire'
              'rust' 'rust-bindgen' 'qt6-base' 'java-runtime-headless'
-             'git')
+             'git' 'compiler-rt')
 optdepends=('pipewire: WebRTC desktop sharing under Wayland'
             'kdialog: support for native dialogs in Plasma'
             'gtk4: for --gtk-version=4 (GTK4 IME might work better on Wayland)'
@@ -41,18 +41,18 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         use-oauth2-client-switches-as-default.patch
-        chromium-140.0.7339.41-rust.patch)
-sha256sums=('a7b9a8dd5ddd65fb756bf35fb9180fca26ec59e1d55bbb105e05483ff15135b8'
+        chromium-141-cssstylesheet-iwyu.patch)
+sha256sums=('e1a15924aeeee3cbd76cf15fd2dce755acea2a7cb034ea2993fd02dd63738764'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            '4b460f58a11368468bcad1da0d9f6ef052d2b2d2703238c5faada89023022491'
-            '70f01b0d57afaffbed0702e7f9b70f9901cd7cbae1f8e830deb0ca579a700763'
+            '4aaea452fb7c2ee15fcfc7343661f61faf24e2599e145cc6ea65c0c9d521fdb9'
+            'bc93077f020f7fe68cdee8f7525606a3f6314deacd2eb568b8a34d140a46978f'
             'e9f6c962dcc5bbef3120004de8f4b29b09f0f74d16a272c0a704ef485c52441a'
             '11a96ffa21448ec4c63dd5c8d6795a1998d8e5cd5a689d91aea4d2bdd13fb06e'
             '5abc8611463b3097fc5ce58017ef918af8b70d616ad093b8b486d017d021bbdf'
-            '75681c815bb2a8c102f0d7af3a3790b5012adbbce38780716b257b7da2e1c3d5'
+            '81ba390a500a38c50b5adad9d185d08685cdf9a9d9448e1e33cfff4f2388618d'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
             'e6da901e4d0860058dc2f90c6bbcdc38a0cf4b0a69122000f62204f24fa7e374'
-            '0eb47afd031188cf5a3f0502f3025a73a1799dfa52dff9906db5a3c2af24e2eb')
+            'de5c873564b09713b65dd9e6a0b9049d7b3cf8f881436f36e1c091824b63e876')
 
 if (( _manual_clone )); then
   source[0]=fetch-chromium-release
@@ -153,10 +153,10 @@ prepare() {
 
   # Fixes from Gentoo
   patch -Np1 -i $srcdir/chromium-138-nodejs-version-check.patch
+  patch -Np1 -i $srcdir/chromium-141-cssstylesheet-iwyu.patch
 
   # Fixes from NixOS
   patch -Np1 -i $srcdir/chromium-138-rust-1.86-mismatched_lifetime_syntaxes.patch
-  patch -Np1 -i $srcdir/chromium-140.0.7339.41-rust.patch
 
   # Allow libclang_rt.builtins from compiler-rt >= 16 to be used
   patch -Np1 -i $srcdir/compiler-rt-adjust-paths.patch
@@ -236,6 +236,7 @@ build() {
     'use_qt6=true'
     'moc_qt6_path="/usr/lib/qt6"'
     "google_api_key=\"$_google_api_key\""
+    'use_clang_modules=false'
     "google_default_client_id=\"$_google_default_client_id\""
     "google_default_client_secret=\"$_google_default_client_secret\""
   )
