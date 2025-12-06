@@ -5,10 +5,10 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=142.0.7444.176
-_pkgver=142.0.7444.175
+pkgver=143.0.7499.40
+_pkgver=${pkgver}
 _chrome_ver=${_pkgver}
-_commit=2124fd8aa7d29dd6e1b38d5514916881d7566992
+_commit=2cec47c9187eaf77b3c4859f43ec74f648d33def
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -42,10 +42,10 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         increase-fortify-level.patch
         use-oauth2-client-switches-as-default.patch
         chromium-141-cssstylesheet-iwyu.patch)
-sha256sums=('619b37ab0273f72fac859fff8dd89fbf1b7ae7e7ccb8d67bc79281b24f683bc9'
+sha256sums=('c1ffa0951b98641de2718143a41e3ae13702a220da7b38be62c8eb4d94c929d2'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            '01a5cd6c0c4c82837d20a77efa77767c03155a880a3f5047f7f1b3cfb4821aab'
-            '8e1d71b56be7b5fa8cf3de251bc9d6f4e4b6500697142f0f1a94c5a5ec6e2e85'
+            '4e6d6b8f827e3cd890eb9961a466bb2987054fb3f5a8a5e1172180da897d3dd4'
+            'af1e727cdf1f0f86ecd92440489eb96058a37eaf71927503c1989776001a8085'
             'e9f6c962dcc5bbef3120004de8f4b29b09f0f74d16a272c0a704ef485c52441a'
             '11a96ffa21448ec4c63dd5c8d6795a1998d8e5cd5a689d91aea4d2bdd13fb06e'
             '5abc8611463b3097fc5ce58017ef918af8b70d616ad093b8b486d017d021bbdf'
@@ -76,7 +76,7 @@ declare -gA _system_libs=(
   #[libavif]=libavif  # needs -DAVIF_ENABLE_EXPERIMENTAL_GAIN_MAP=ON
   [libdrm]=
   [libjpeg]=libjpeg-turbo
-  [libpng]=libpng
+  #[libpng]=libpng
   #[libvpx]=libvpx
   [libwebp]=libwebp
   [libxml]=libxml2
@@ -139,7 +139,7 @@ prepare() {
   rm -f Android-Pixel-Perfect-Mode.patch
   rm -f Temp-use-PREVIEW-for-IDCompositionDevice5.patch
   rm -f Experimental-support-for-extensions-on-Android.patch
-  rm -f Backport-v143-android-extensions-changes.patch
+  rm -f Backport-v144-android-extensions-changes.patch
   rm -f Enable-extension-in-incognito.patch
   popd
 

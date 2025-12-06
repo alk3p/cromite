@@ -1,0 +1,13 @@
+diff --git a/chrome/test/chromedriver/chrome_launcher.cc b/chrome/test/chromedriver/chrome_launcher.cc
+index acedd655ce..f58bd07b32 100644
+--- a/chrome/test/chromedriver/chrome_launcher.cc
++++ b/chrome/test/chromedriver/chrome_launcher.cc
+@@ -1112,7 +1112,7 @@ Status ProcessExtension(const std::string& extension,
+     crx_file::VerifierResult result = crx_file::Verify(
+         extension_crx, crx_file::VerifierFormat::CRX3,
+         {} /** required_key_hashes */, {} /** required_file_hash */,
+-        &public_key_base64, &id, /*compressed_verified_contents=*/nullptr);
++        &public_key_base64, &id, /*compressed_verified_contents=*/nullptr, /*is_extension*/true);
+     if (result == crx_file::VerifierResult::ERROR_HEADER_INVALID) {
+       return Status(kUnknownError,
+                     "CRX verification failed to parse extension header. Chrome "
