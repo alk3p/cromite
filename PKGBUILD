@@ -1,14 +1,14 @@
-# Maintainer: Evangelos Foutras <foutrelis@archlinux.org>
 # Maintainer: Christian Heusel <gromit@archlinux.org>
+# Contributor: Evangelos Foutras <foutrelis@archlinux.org>
 # Contributor: Pierre Schmitz <pierre@archlinux.de>
 # Contributor: Jan "heftig" Steffens <jan.steffens@gmail.com>
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=143.0.7499.40
-_pkgver=${pkgver}
+pkgver=144.0.7559.97
+_pkgver=144.0.7559.96
 _chrome_ver=${_pkgver}
-_commit=2cec47c9187eaf77b3c4859f43ec74f648d33def
+_commit=2ba21150282e277cdab0f534cb57978d9a9ac398
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -37,22 +37,20 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_chrome_ver-1_amd64.deb
         widevine-revision.patch
         chromium-138-nodejs-version-check.patch
-        chromium-138-rust-1.86-mismatched_lifetime_syntaxes.patch
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         use-oauth2-client-switches-as-default.patch
-        chromium-141-cssstylesheet-iwyu.patch)
-sha256sums=('c1ffa0951b98641de2718143a41e3ae13702a220da7b38be62c8eb4d94c929d2'
+        chromium-144-fix-hdr-issue.patch)
+sha256sums=('6f7fbeaa5ef0b1b4c0ede631edb7365ae48602f587c3c3b65af874922d21a064'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            '4e6d6b8f827e3cd890eb9961a466bb2987054fb3f5a8a5e1172180da897d3dd4'
-            'af1e727cdf1f0f86ecd92440489eb96058a37eaf71927503c1989776001a8085'
+            '4aa5a9c0ff544ab429eafb3397b96dc1ac84589ed28e9e27416058921cb12842'
+            'b4f33e6db4f702b78e3d975e1df3b692d057bc51a2707d7ea33fdad91f8c6c41'
             'e9f6c962dcc5bbef3120004de8f4b29b09f0f74d16a272c0a704ef485c52441a'
             '11a96ffa21448ec4c63dd5c8d6795a1998d8e5cd5a689d91aea4d2bdd13fb06e'
-            '5abc8611463b3097fc5ce58017ef918af8b70d616ad093b8b486d017d021bbdf'
-            '81ba390a500a38c50b5adad9d185d08685cdf9a9d9448e1e33cfff4f2388618d'
+            'ec8e49b7114e2fa2d359155c9ef722ff1ba5fe2c518fa48e30863d71d3b82863'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
             'e6da901e4d0860058dc2f90c6bbcdc38a0cf4b0a69122000f62204f24fa7e374'
-            'de5c873564b09713b65dd9e6a0b9049d7b3cf8f881436f36e1c091824b63e876')
+            '789ee9bfe39772eae0df42c187b7a54550921b909bfae8051df81a1b4621f307')
 
 if (( _manual_clone )); then
   source[0]=fetch-chromium-release
@@ -157,19 +155,16 @@ prepare() {
 
   # Fixes from Gentoo
   patch -Np1 -i $srcdir/chromium-138-nodejs-version-check.patch
-  patch -Np1 -i $srcdir/chromium-141-cssstylesheet-iwyu.patch
-
-  # Fixes from NixOS
-  patch -Np1 -i $srcdir/chromium-138-rust-1.86-mismatched_lifetime_syntaxes.patch
-
   # Allow libclang_rt.builtins from compiler-rt >= 16 to be used
   patch -Np1 -i $srcdir/compiler-rt-adjust-paths.patch
 
   # Increase _FORTIFY_SOURCE level to match Arch's default flags
   patch -Np1 -i $srcdir/increase-fortify-level.patch
 
+  patch -Np1 -i $srcdir/chromium-144-fix-hdr-issue.patch
+
   # Link to system tools required by the build
-  mkdir -p third_party/node/linux/node-linux-x64/bin
+  mkdir -p third_party/node/linux/node-linux-x64/bin third_party/jdk/current/bin
   ln -sf /usr/bin/node third_party/node/linux/node-linux-x64/bin/
   ln -sf /usr/bin/java third_party/jdk/current/bin/
 
@@ -180,6 +175,11 @@ prepare() {
 
     # To link to rust libraries we need to compile with prebuilt clang
     ./tools/clang/scripts/update.py
+  else
+    # To use correct libadler2 lib
+    # See also: https://github.com/ungoogled-software/ungoogled-chromium/pull/3598
+    sed -i 's/rustc_nightly_capability = use_chromium_rust_toolchain/rustc_nightly_capability = true/' \
+      build/config/rust.gni
   fi
 
   # Remove bundled libraries for which we will use the system copies; this
@@ -267,7 +267,7 @@ build() {
       'clang_base_path="/usr"'
       'clang_use_chrome_plugins=false'
       "clang_version=\"$_clang_version\""
-      #'chrome_pgo_phase=0' # needs newer clang to read the bundled PGO profile
+      'chrome_pgo_phase=0' # needs newer clang to read the bundled PGO profile
     )
 
     # Allow the use of nightly features with stable Rust compiler
@@ -312,6 +312,15 @@ build() {
   # https://crbug.com/957519#c122
   CXXFLAGS=${CXXFLAGS/-Wp,-D_GLIBCXX_ASSERTIONS}
 
+  if [[ $CARCH == aarch64 ]] || [[ $CARCH == riscv64 ]]; then
+    # On aarch64 and riscv64, certain files (e.g. in libvpx and libyuv) needs to
+    # be compiled with additional arch features (e.g. dotprod, sve, sme, rvv)
+    # Having an arch setting in the C(XX)FLAGS overrides those
+    # and causes compilation failure
+    CFLAGS="${CFLAGS/-march=*([^ ]) }"
+    CXXFLAGS="${CXXFLAGS/-march=*([^ ]) }"
+  fi
+
   gn gen out/Release --args="${_flags[*]}"
   ninja -C out/Release chrome chrome_sandbox chromedriver.unstripped
 }
@@ -319,23 +328,25 @@ build() {
 package() {
   cd chromium-launcher-$_launcher_ver
   make PREFIX=/usr DESTDIR="$pkgdir" CHROMIUM_NAME=cromite install
-  install -Dm644 LICENSE \
+  install -Dvm644 LICENSE \
     "$pkgdir/usr/share/licenses/cromite/LICENSE.launcher"
 
   cd ../chromium-$_pkgver
 
-  install -D out/Release/chrome "$pkgdir/usr/lib/cromite/cromite"
-  # install -D out/Release/chromedriver.unstripped "$pkgdir/usr/bin/chromedriver"
-  install -Dm4755 out/Release/chrome_sandbox "$pkgdir/usr/lib/cromite/chrome-sandbox"
+  install -Dv out/Release/chrome "$pkgdir/usr/lib/cromite/cromite"
+  # install -Dv out/Release/chromedriver.unstripped "$pkgdir/usr/bin/chromedriver"
+  install -Dvm4755 out/Release/chrome_sandbox "$pkgdir/usr/lib/cromite/chrome-sandbox"
 
-  install -Dm644 chrome/installer/linux/common/desktop.template \
+  install -Dvm644 chrome/installer/linux/common/desktop.template \
     "$pkgdir/usr/share/applications/cromite.desktop"
-  install -Dm644 chrome/app/resources/manpage.1.in \
+  install -Dvm644 chrome/app/resources/manpage.1.in \
     "$pkgdir/usr/share/man/man1/cromite.1"
   sed -i \
     -e 's/@@MENUNAME@@/Cromite/g' \
     -e 's/@@PACKAGE@@/chromium/g' \
     -e 's/@@USR_BIN_SYMLINK_NAME@@/cromite/g' \
+    -e 's|@@URI_SCHEME@@|x-scheme-handler/chromium;|g' \
+    -e 's/@@EXTRA_DESKTOP_ENTRIES@@//g' \
     "$pkgdir/usr/share/applications/cromite.desktop" \
     "$pkgdir/usr/share/man/man1/cromite.1"
 
@@ -347,7 +358,7 @@ package() {
     export $(grep -o '^[A-Z_]*' $info_file)
     sed -E -e 's/@@([A-Z_]*)@@/\${\1}/g' -e '/<update_contact>/d' $tmpl_file | envsubst
   ) \
-  | install -Dm644 /dev/stdin "$pkgdir/usr/share/metainfo/cromite.appdata.xml"
+  | install -Dvm644 /dev/stdin "$pkgdir/usr/share/metainfo/cromite.appdata.xml"
 
   local toplevel_files=(
     chrome_100_percent.pak
@@ -372,23 +383,23 @@ package() {
   fi
 
   cp "${toplevel_files[@]/#/out/Release/}" "$pkgdir/usr/lib/cromite/"
-  install -Dm644 -t "$pkgdir/usr/lib/cromite/locales" out/Release/locales/*.pak
+  install -Dvm644 -t "$pkgdir/usr/lib/cromite/locales" out/Release/locales/*.pak
 
   for size in 24 48 64 128 256; do
-    install -Dm644 "chrome/app/theme/chromium/product_logo_$size.png" \
+    install -Dvm644 "chrome/app/theme/chromium/product_logo_$size.png" \
       "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/cromite.png"
   done
 
   for size in 16 32; do
-    install -Dm644 "chrome/app/theme/default_100_percent/chromium/product_logo_$size.png" \
+    install -Dvm644 "chrome/app/theme/default_100_percent/chromium/product_logo_$size.png" \
       "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/cromite.png"
   done
 
-  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/cromite/LICENSE"
+  install -Dvm644 LICENSE "$pkgdir/usr/share/licenses/cromite/LICENSE"
 
   cp -a $srcdir/WidevineCdm "$pkgdir/usr/lib/cromite/"
   find "$pkgdir/usr/lib/cromite/WidevineCdm" -name '*.so' -exec chmod +x {} \;
-  install -Dm644 $srcdir/WidevineCdm/LICENSE \
+  install -Dvm644 $srcdir/WidevineCdm/LICENSE \
     "$pkgdir/usr/share/licenses/cromite/LICENSE.widevine"
 }
 
