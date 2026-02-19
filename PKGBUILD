@@ -5,10 +5,10 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=144.0.7559.97
-_pkgver=144.0.7559.96
+pkgver=145.0.7632.76
+_pkgver=145.0.7632.75
 _chrome_ver=${_pkgver}
-_commit=2ba21150282e277cdab0f534cb57978d9a9ac398
+_commit=5342ca5f64ca7da15a07d2cefee953514d540807
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -37,24 +37,26 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_chrome_ver-1_amd64.deb
         widevine-revision.patch
         chromium-138-nodejs-version-check.patch
+        chromium-145-fix-SYS_SECCOMP.patch
+        ungoogled-chromium-145-build-with-wasm-rollup.patch
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
-        use-oauth2-client-switches-as-default.patch
-        chromium-144-fix-hdr-issue.patch)
-sha256sums=('6f7fbeaa5ef0b1b4c0ede631edb7365ae48602f587c3c3b65af874922d21a064'
+        use-oauth2-client-switches-as-default.patch)
+sha256sums=('e9db10f2065fda0ee715c1f41fa110cccc4c800a2d7d9a5f8f355b2e210f377f'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            '4aa5a9c0ff544ab429eafb3397b96dc1ac84589ed28e9e27416058921cb12842'
-            'b4f33e6db4f702b78e3d975e1df3b692d057bc51a2707d7ea33fdad91f8c6c41'
+            'a121897cd5a81f75863e2642c4673e8aa2b339f0ff8e302ab59e59de3e7ca6fd'
+            'e21163461914451ab535774050f7ac4b7dadfcdc86f5e6fbf38fec5bbe439425'
             'e9f6c962dcc5bbef3120004de8f4b29b09f0f74d16a272c0a704ef485c52441a'
             '11a96ffa21448ec4c63dd5c8d6795a1998d8e5cd5a689d91aea4d2bdd13fb06e'
+            '4fc040a0656a0a524dd8ad090cd129fc5b6cb21adcc66be82080165789e8c13e'
+            '45fa20cc27ef0aa00d654d0bac84bfaa8d8090b5f8aec49cc2e8d7249d3cd7ba'
             'ec8e49b7114e2fa2d359155c9ef722ff1ba5fe2c518fa48e30863d71d3b82863'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
-            'e6da901e4d0860058dc2f90c6bbcdc38a0cf4b0a69122000f62204f24fa7e374'
-            '789ee9bfe39772eae0df42c187b7a54550921b909bfae8051df81a1b4621f307')
+            '9343afa1a4308a7cfb3317229f5aff7778688debcc03c4a74a85908aa1d0cc3a')
 
 if (( _manual_clone )); then
   source[0]=fetch-chromium-release
-  sha256sums[0]=380ef492e5a347219d5ea2755a24625993eed65fc2951d5e6c31dd229edd0227
+  sha256sums[0]='380ef492e5a347219d5ea2755a24625993eed65fc2951d5e6c31dd229edd0227'
   makedepends+=('python-httplib2' 'python-pyparsing' 'python-six' 'npm' 'rsync')
 fi
 
@@ -161,7 +163,11 @@ prepare() {
   # Increase _FORTIFY_SOURCE level to match Arch's default flags
   patch -Np1 -i $srcdir/increase-fortify-level.patch
 
-  patch -Np1 -i $srcdir/chromium-144-fix-hdr-issue.patch
+  # Fix npm cannot find rollup
+  patch -Np1 -i $srcdir/ungoogled-chromium-145-build-with-wasm-rollup.patch
+
+  # https://crbug.com/456218403
+  patch -Np1 -i $srcdir/chromium-145-fix-SYS_SECCOMP.patch
 
   # Link to system tools required by the build
   mkdir -p third_party/node/linux/node-linux-x64/bin third_party/jdk/current/bin
@@ -342,11 +348,11 @@ package() {
   install -Dvm644 chrome/app/resources/manpage.1.in \
     "$pkgdir/usr/share/man/man1/cromite.1"
   sed -i \
-    -e 's/@@MENUNAME@@/Cromite/g' \
-    -e 's/@@PACKAGE@@/chromium/g' \
-    -e 's/@@USR_BIN_SYMLINK_NAME@@/cromite/g' \
-    -e 's|@@URI_SCHEME@@|x-scheme-handler/chromium;|g' \
-    -e 's/@@EXTRA_DESKTOP_ENTRIES@@//g' \
+    -e 's/@@MENUNAME/Cromite/g' \
+    -e 's/@@PACKAGE/chromium/g' \
+    -e 's/@@usr_bin_symlink_name/cromite/g' \
+    -e 's|@@uri_scheme|x-scheme-handler/chromium;|g' \
+    -e 's/@@extra_desktop_entries//g' \
     "$pkgdir/usr/share/applications/cromite.desktop" \
     "$pkgdir/usr/share/man/man1/cromite.1"
 
