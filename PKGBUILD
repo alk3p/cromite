@@ -6,10 +6,10 @@
 
 pkgname=chromium
 pkgver=146.0.7680.71
-pkgrel=1
+pkgrel=2
 _launcher_ver=8
 _manual_clone=0
-_system_clang=0
+_system_clang=1
 pkgdesc="A web browser built for speed, simplicity, and security"
 arch=('x86_64')
 url="https://www.chromium.org/Home"
@@ -33,8 +33,8 @@ depends=(
   'xdg-utils'
 )
 makedepends=(
-  # 'clang'
-  # 'compiler-rt'
+  'clang'
+  'compiler-rt'
   'git'
   'gn'
   'gperf'
@@ -45,8 +45,8 @@ makedepends=(
   'pipewire'
   'python'
   'qt6-base'
-  # 'rust-bindgen'
-  # 'rustup'
+  'rust-bindgen'
+  'rust'
 )
 optdepends=('pipewire: WebRTC desktop sharing under Wayland'
             'kdialog: support for native dialogs in Plasma'
@@ -60,6 +60,7 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         chromium-138-nodejs-version-check.patch
         chromium-145-fix-SYS_SECCOMP.patch
         chromium-146-drop-unknown-clang-flag.patch
+        chromium-146-apply-upstream-libmuck-fix.patch
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         enable-widevine-arm64.patch
@@ -69,6 +70,7 @@ sha256sums=('094a80801d0a3573c5654cf004f4fc34e2219069380652916235794fc0f94414'
             '11a96ffa21448ec4c63dd5c8d6795a1998d8e5cd5a689d91aea4d2bdd13fb06e'
             '4fc040a0656a0a524dd8ad090cd129fc5b6cb21adcc66be82080165789e8c13e'
             '24535c314c7e70c52bcf409aaf604728bfc5b5c97e60087e630e1f7233b9e12d'
+            '06299959918481caf2c27bcb1841088967d9855acc22970ffcaa75e0cb218f0e'
             'ec8e49b7114e2fa2d359155c9ef722ff1ba5fe2c518fa48e30863d71d3b82863'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
             '9c766b82d1143cb3413fe2057361bd2655e46287eacc2c6d6f8504b4c255647a'
@@ -120,7 +122,7 @@ depends+=(${_system_libs[@]})
 _google_api_key=AIzaSyDwr302FpOSkGRpLlUpPThNTDPbXcIn_FM
 
 prepare() {
-  # rustup toolchain install 1.95.0-dev
+  # rustup install nightly
 
   if (( _manual_clone )); then
     ./fetch-chromium-release $pkgver
@@ -149,7 +151,7 @@ prepare() {
   patch -Np1 -i ../chromium-138-nodejs-version-check.patch
 
   # Allow libclang_rt.builtins from compiler-rt >= 16 to be used
-  # patch -Np1 -i ../compiler-rt-adjust-paths.patch
+  patch -Np1 -i ../compiler-rt-adjust-paths.patch
 
   # Increase _FORTIFY_SOURCE level to match Arch's default flags
   patch -Np1 -i ../increase-fortify-level.patch
@@ -157,6 +159,9 @@ prepare() {
   # Fix issue about missing compiler flag, can be dropped when arch has LLVM 23
   # clang++: error: unknown argument: '-fsanitize-ignore-for-ubsan-feature=array-bounds'
   patch -Np1 -i ../chromium-146-drop-unknown-clang-flag.patch
+
+  # https://chromium-review.googlesource.com/c/chromium/src/+/7487414
+  patch -Np1 -i ../chromium-146-apply-upstream-libmuck-fix.patch
 
   # https://crbug.com/456218403
   patch -Np1 -i ../chromium-145-fix-SYS_SECCOMP.patch
@@ -265,7 +270,7 @@ build() {
     _flags+=(
       'rust_sysroot_absolute="/usr"'
       'rust_bindgen_root="/usr"'
-      "rustc_version=\"$(rustc --version)\""
+      "rustc_version=\"$(rustc --version | awk '{ print $2 ;}')\""
     )
   fi
 
