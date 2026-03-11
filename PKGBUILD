@@ -64,7 +64,8 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         enable-widevine-arm64.patch
-        use-oauth2-client-switches-as-default.patch)
+        use-oauth2-client-switches-as-default.patch
+        glibc-2.42-baud-rate-fix.patch)
 sha256sums=('094a80801d0a3573c5654cf004f4fc34e2219069380652916235794fc0f94414'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
             '11a96ffa21448ec4c63dd5c8d6795a1998d8e5cd5a689d91aea4d2bdd13fb06e'
@@ -74,7 +75,8 @@ sha256sums=('094a80801d0a3573c5654cf004f4fc34e2219069380652916235794fc0f94414'
             'ec8e49b7114e2fa2d359155c9ef722ff1ba5fe2c518fa48e30863d71d3b82863'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
             '9c766b82d1143cb3413fe2057361bd2655e46287eacc2c6d6f8504b4c255647a'
-            '9343afa1a4308a7cfb3317229f5aff7778688debcc03c4a74a85908aa1d0cc3a')
+            '9343afa1a4308a7cfb3317229f5aff7778688debcc03c4a74a85908aa1d0cc3a'
+            '1c1898f263eaacbc069a8e1a3e732852350350d1dad4cb1a6bba430e3b796cd0')
 
 if (( _manual_clone )); then
   source[0]=fetch-chromium-release
@@ -168,6 +170,9 @@ prepare() {
 
   # enable widevine for arm64
   patch -Np1 -i ../enable-widevine-arm64.patch
+
+  # https://crbug.com/456677057
+  patch -Np1 -i ../glibc-2.42-baud-rate-fix.patch
 
   # Link to system tools required by the build
   mkdir -p third_party/node/linux/node-linux-x64/bin third_party/jdk/current/bin
