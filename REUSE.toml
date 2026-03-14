@@ -40,8 +40,9 @@ path = [
 SPDX-FileCopyrightText = "chromium contributors"
 SPDX-License-Identifier = "BSD-3-Clause"
 
-# [[annotations]]
-# path = [
-# ]
-# SPDX-FileCopyrightText = "2015-2026 The ungoogled-chromium Authors"
-# SPDX-License-Identifier = "BSD-3-Clause"
+[[annotations]]
+path = [
+    "chromium-146-build-with-wasm-rollup.patch",
+]
+SPDX-FileCopyrightText = "2015-2026 The ungoogled-chromium Authors"
+SPDX-License-Identifier = "BSD-3-Clause"
