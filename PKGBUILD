@@ -5,10 +5,10 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=145.0.7632.76
-_pkgver=145.0.7632.75
-_chrome_ver=${_pkgver}
-_commit=5342ca5f64ca7da15a07d2cefee953514d540807
+pkgver=146.0.7680.111
+_pkgver=$pkgver
+_chrome_ver=146.0.7680.164
+_commit=31d4039f3999b2c2eaed2c377fec3fb923ba62b0
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -17,42 +17,77 @@ pkgdesc="A Bromite fork with ad blocking and privacy enhancements"
 arch=('x86_64')
 url="https://github.com/uazo/cromite"
 license=('GPL3')
-depends=('gtk3' 'nss' 'alsa-lib' 'xdg-utils' 'libxss' 'libcups' 'libgcrypt'
-         'ttf-liberation' 'systemd' 'dbus' 'libpulse' 'pciutils' 'libva'
-         'libffi' 'desktop-file-utils' 'hicolor-icon-theme')
-makedepends=('python' 'gn' 'ninja' 'clang' 'lld' 'gperf' 'nodejs' 'pipewire'
-             'rust' 'rust-bindgen' 'qt6-base' 'java-runtime-headless'
-             'git' 'compiler-rt')
+depends=(
+  'alsa-lib'
+  'dbus'
+  'desktop-file-utils'
+  'gtk3'
+  'hicolor-icon-theme'
+  'libcups'
+  'libffi'
+  'libgcrypt'
+  'libpulse'
+  'libva'
+  'libxss'
+  'nss'
+  'pciutils'
+  'systemd'
+  'ttf-liberation'
+  'xdg-utils'
+)
+makedepends=(
+  'clang'
+  'compiler-rt'
+  'git'
+  'gn'
+  'gperf'
+  'java-runtime-headless'
+  'lld'
+  'ninja'
+  'nodejs'
+  'pipewire'
+  'python'
+  'qt6-base'
+  'rust-bindgen'
+  'rust'
+)
 optdepends=('pipewire: WebRTC desktop sharing under Wayland'
             'kdialog: support for native dialogs in Plasma'
             'gtk4: for --gtk-version=4 (GTK4 IME might work better on Wayland)'
-            'org.freedesktop.secrets: password storage backend on GNOME / Xfce'
-            'kwallet: support for storing passwords in KWallet on Plasma'
+            'org.freedesktop.secrets: password storage backend on GNOME, KDE and Xfce'
             'upower: Battery Status API support')
 install="${pkgname}.install"
 options=('!lto') # Chromium adds its own flags for ThinLTO
 source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$_pkgver-lite.tar.xz
         https://github.com/foutrelis/chromium-launcher/archive/v$_launcher_ver/chromium-launcher-$_launcher_ver.tar.gz
-        https://github.com/uazo/cromite/archive/refs/tags/v$pkgver-$_commit.tar.gz
+        https://github.com/uazo/cromite/archive/$_commit.tar.gz
         https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_chrome_ver-1_amd64.deb
         widevine-revision.patch
         chromium-138-nodejs-version-check.patch
         chromium-145-fix-SYS_SECCOMP.patch
-        ungoogled-chromium-145-build-with-wasm-rollup.patch
+        chromium-146-drop-unknown-clang-flag.patch
+        chromium-146-apply-upstream-libmuck-fix.patch
+        chromium-146-build-with-wasm-rollup.patch
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
-        use-oauth2-client-switches-as-default.patch)
-sha256sums=('e9db10f2065fda0ee715c1f41fa110cccc4c800a2d7d9a5f8f355b2e210f377f'
+        enable-widevine-arm64.patch
+        use-oauth2-client-switches-as-default.patch
+        glibc-2.42-baud-rate-fix.patch)
+sha256sums=('380ef492e5a347219d5ea2755a24625993eed65fc2951d5e6c31dd229edd0227'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            'a121897cd5a81f75863e2642c4673e8aa2b339f0ff8e302ab59e59de3e7ca6fd'
-            'e21163461914451ab535774050f7ac4b7dadfcdc86f5e6fbf38fec5bbe439425'
+            '0dd911f044702b4914760a590fcfd466af9aef01e1ad6ebfc4cc25a7415c6169'
+            'f6dd8715a3f10f0cd37b2e7b8831a96359ea856c747da222d3b2623ae651b374'
             'e9f6c962dcc5bbef3120004de8f4b29b09f0f74d16a272c0a704ef485c52441a'
             '11a96ffa21448ec4c63dd5c8d6795a1998d8e5cd5a689d91aea4d2bdd13fb06e'
             '4fc040a0656a0a524dd8ad090cd129fc5b6cb21adcc66be82080165789e8c13e'
+            '24535c314c7e70c52bcf409aaf604728bfc5b5c97e60087e630e1f7233b9e12d'
+            '06299959918481caf2c27bcb1841088967d9855acc22970ffcaa75e0cb218f0e'
             '45fa20cc27ef0aa00d654d0bac84bfaa8d8090b5f8aec49cc2e8d7249d3cd7ba'
             'ec8e49b7114e2fa2d359155c9ef722ff1ba5fe2c518fa48e30863d71d3b82863'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
-            '9343afa1a4308a7cfb3317229f5aff7778688debcc03c4a74a85908aa1d0cc3a')
+            '9c766b82d1143cb3413fe2057361bd2655e46287eacc2c6d6f8504b4c255647a'
+            '9343afa1a4308a7cfb3317229f5aff7778688debcc03c4a74a85908aa1d0cc3a'
+            '1c1898f263eaacbc069a8e1a3e732852350350d1dad4cb1a6bba430e3b796cd0')
 
 if (( _manual_clone )); then
   source[0]=fetch-chromium-release
@@ -101,6 +136,7 @@ _google_default_client_id=77185425430.apps.googleusercontent.com
 _google_default_client_secret=OTJgUOQcT7lO7GsGZq2G4IlT
 
 prepare() {
+  # rustup install nightly
   bsdtar -x --strip-components 4 -f data.tar.xz opt/google/chrome/WidevineCdm
 
   if (( _manual_clone )); then
@@ -119,7 +155,7 @@ prepare() {
     third_party/blink/renderer/core/xml/parser/xml_document_parser.cc \
     third_party/libxml/chromium/*.cc
 
-  pushd $srcdir/cromite-$pkgver-$_commit/build/patches
+  pushd $srcdir/cromite-$_commit/build/patches
   # Restore default codecs
   rm -f Enable-platform-aac-audio-and-h264-video.patch
   # Enable reverse image search
@@ -143,10 +179,10 @@ prepare() {
   rm -f Enable-extension-in-incognito.patch
   popd
 
-  for patch in $(cat $srcdir/cromite-$pkgver-$_commit/build/cromite_patches_list.txt); do
-    if [ -f $srcdir/cromite-$pkgver-$_commit/build/patches/$patch ]; then
+  for patch in $(cat $srcdir/cromite-$_commit/build/cromite_patches_list.txt); do
+    if [ -f $srcdir/cromite-$_commit/build/patches/$patch ]; then
       echo "Applying: $patch"
-      git apply $srcdir/cromite-$pkgver-$_commit/build/patches/$patch
+      git apply $srcdir/cromite-$_commit/build/patches/$patch
     fi
   done
 
@@ -157,17 +193,30 @@ prepare() {
 
   # Fixes from Gentoo
   patch -Np1 -i $srcdir/chromium-138-nodejs-version-check.patch
+
   # Allow libclang_rt.builtins from compiler-rt >= 16 to be used
   patch -Np1 -i $srcdir/compiler-rt-adjust-paths.patch
 
   # Increase _FORTIFY_SOURCE level to match Arch's default flags
   patch -Np1 -i $srcdir/increase-fortify-level.patch
 
-  # Fix npm cannot find rollup
-  patch -Np1 -i $srcdir/ungoogled-chromium-145-build-with-wasm-rollup.patch
+  # Fix issue about missing compiler flag, can be dropped when arch has LLVM 23
+  # clang++: error: unknown argument: '-fsanitize-ignore-for-ubsan-feature=array-bounds'
+  patch -Np1 -i $srcdir/chromium-146-drop-unknown-clang-flag.patch
+
+  # https://chromium-review.googlesource.com/c/chromium/src/+/7487414
+  patch -Np1 -i $srcdir/chromium-146-apply-upstream-libmuck-fix.patch
 
   # https://crbug.com/456218403
   patch -Np1 -i $srcdir/chromium-145-fix-SYS_SECCOMP.patch
+
+  patch -Np1 -i $srcdir/chromium-146-build-with-wasm-rollup.patch
+
+  # enable widevine for arm64
+  patch -Np1 -i $srcdir/enable-widevine-arm64.patch
+
+  # https://crbug.com/456677057
+  patch -Np1 -i $srcdir/glibc-2.42-baud-rate-fix.patch
 
   # Link to system tools required by the build
   mkdir -p third_party/node/linux/node-linux-x64/bin third_party/jdk/current/bin
@@ -181,11 +230,6 @@ prepare() {
 
     # To link to rust libraries we need to compile with prebuilt clang
     ./tools/clang/scripts/update.py
-  else
-    # To use correct libadler2 lib
-    # See also: https://github.com/ungoogled-software/ungoogled-chromium/pull/3598
-    sed -i 's/rustc_nightly_capability = use_chromium_rust_toolchain/rustc_nightly_capability = true/' \
-      build/config/rust.gni
   fi
 
   # Remove bundled libraries for which we will use the system copies; this
@@ -203,6 +247,11 @@ prepare() {
 
   ./build/linux/unbundle/replace_gn_files.py \
     --system-libraries "${!_system_libs[@]}"
+
+  # Generate missing header
+  python3 build/util/lastchange.py -m DAWN_COMMIT_HASH \
+    -s third_party/dawn --revision gpu/webgpu/DAWN_VERSION \
+    --header gpu/webgpu/dawn_commit_hash.h
 }
 
 build() {
@@ -257,7 +306,7 @@ build() {
     'enable_bound_session_credentials=false'
     'use_rtti=false'
     'chrome_pgo_phase=2'
-    'enable_glic=false'
+    #'enable_glic=false'
     'build_tflite_with_xnnpack=false'
   )
 
@@ -283,7 +332,7 @@ build() {
     _flags+=(
       'rust_sysroot_absolute="/usr"'
       'rust_bindgen_root="/usr"'
-      "rustc_version=\"$(rustc --version)\""
+      "rustc_version=\"$(rustc --version | awk '{ print $2 ;}')\""
     )
   fi
 
