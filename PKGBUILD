@@ -5,10 +5,10 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=cromite
-pkgver=146.0.7680.111
-_pkgver=$pkgver
-_chrome_ver=146.0.7680.164
-_commit=31d4039f3999b2c2eaed2c377fec3fb923ba62b0
+pkgver=147.0.7727.56
+_pkgver=147.0.7727.55
+_chrome_ver=$_pkgver
+_commit=271900671db643de04aa9f909f0dcc3415c8b827
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
@@ -60,29 +60,31 @@ install="${pkgname}.install"
 options=('!lto') # Chromium adds its own flags for ThinLTO
 source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$_pkgver-lite.tar.xz
         https://github.com/foutrelis/chromium-launcher/archive/v$_launcher_ver/chromium-launcher-$_launcher_ver.tar.gz
-        https://github.com/uazo/cromite/archive/$_commit.tar.gz
+        https://github.com/uazo/cromite/archive/refs/tags/v$pkgver-$_commit.tar.gz
         https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_chrome_ver-1_amd64.deb
+        cromite-fixup-Enable-component-updater.patch
         widevine-revision.patch
         chromium-138-nodejs-version-check.patch
         chromium-145-fix-SYS_SECCOMP.patch
         chromium-146-drop-unknown-clang-flag.patch
-        chromium-146-apply-upstream-libmuck-fix.patch
         chromium-146-build-with-wasm-rollup.patch
+        chromium-147-revert-clang-no-lifetime-dse-flag.patch
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         enable-widevine-arm64.patch
         use-oauth2-client-switches-as-default.patch
         glibc-2.42-baud-rate-fix.patch)
-sha256sums=('380ef492e5a347219d5ea2755a24625993eed65fc2951d5e6c31dd229edd0227'
+sha256sums=('57594966be592efdb9fe6491f5a834de237f5c7decdca5eb1f7d7a5d38dd54e9'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            '0dd911f044702b4914760a590fcfd466af9aef01e1ad6ebfc4cc25a7415c6169'
-            'f6dd8715a3f10f0cd37b2e7b8831a96359ea856c747da222d3b2623ae651b374'
+            '9420f0be7f7c0658a238ede5d7798ed98eb34e061253d6dfa797236a49d8355c'
+            '377b972c143e90cb6d4ca31a5a28ed1398475d47670e8f7b15e4ba11a42cbb28'
+            '8ffc34510cc73475aad54c1bc49f618c9b1eb4ac77984072d02f0de71a9cb9d3'
             'e9f6c962dcc5bbef3120004de8f4b29b09f0f74d16a272c0a704ef485c52441a'
             '11a96ffa21448ec4c63dd5c8d6795a1998d8e5cd5a689d91aea4d2bdd13fb06e'
             '4fc040a0656a0a524dd8ad090cd129fc5b6cb21adcc66be82080165789e8c13e'
             '24535c314c7e70c52bcf409aaf604728bfc5b5c97e60087e630e1f7233b9e12d'
-            '06299959918481caf2c27bcb1841088967d9855acc22970ffcaa75e0cb218f0e'
             '45fa20cc27ef0aa00d654d0bac84bfaa8d8090b5f8aec49cc2e8d7249d3cd7ba'
+            'c382830318c5b37826ecf44f3ba9def6be8affdad1bce819ecb83f3222ff4b3a'
             'ec8e49b7114e2fa2d359155c9ef722ff1ba5fe2c518fa48e30863d71d3b82863'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
             '9c766b82d1143cb3413fe2057361bd2655e46287eacc2c6d6f8504b4c255647a'
@@ -155,7 +157,7 @@ prepare() {
     third_party/blink/renderer/core/xml/parser/xml_document_parser.cc \
     third_party/libxml/chromium/*.cc
 
-  pushd $srcdir/cromite-$_commit/build/patches
+  pushd $srcdir/cromite-$pkgver-$_commit/build/patches
   # Restore default codecs
   rm -f Enable-platform-aac-audio-and-h264-video.patch
   # Enable reverse image search
@@ -179,12 +181,13 @@ prepare() {
   rm -f Enable-extension-in-incognito.patch
   popd
 
-  for patch in $(cat $srcdir/cromite-$_commit/build/cromite_patches_list.txt); do
-    if [ -f $srcdir/cromite-$_commit/build/patches/$patch ]; then
+  for patch in $(cat $srcdir/cromite-$pkgver-$_commit/build/cromite_patches_list.txt); do
+    if [ -f $srcdir/cromite-$pkgver-$_commit/build/patches/$patch ]; then
       echo "Applying: $patch"
-      git apply $srcdir/cromite-$_commit/build/patches/$patch
+      git apply $srcdir/cromite-$pkgver-$_commit/build/patches/$patch
     fi
   done
+  patch -Np1 -i $srcdir/cromite-fixup-Enable-component-updater.patch
 
   # Widevine fixes from Debian
   patch -Np1 -i $srcdir/widevine-revision.patch
@@ -204,8 +207,8 @@ prepare() {
   # clang++: error: unknown argument: '-fsanitize-ignore-for-ubsan-feature=array-bounds'
   patch -Np1 -i $srcdir/chromium-146-drop-unknown-clang-flag.patch
 
-  # https://chromium-review.googlesource.com/c/chromium/src/+/7487414
-  patch -Np1 -i $srcdir/chromium-146-apply-upstream-libmuck-fix.patch
+  # Causes a build failure with our clang version
+  patch -Np1 -i $srcdir/chromium-147-revert-clang-no-lifetime-dse-flag.patch
 
   # https://crbug.com/456218403
   patch -Np1 -i $srcdir/chromium-145-fix-SYS_SECCOMP.patch
@@ -306,7 +309,7 @@ build() {
     'enable_bound_session_credentials=false'
     'use_rtti=false'
     'chrome_pgo_phase=2'
-    #'enable_glic=false'
+    'enable_glic=false'
     'build_tflite_with_xnnpack=false'
   )
 
