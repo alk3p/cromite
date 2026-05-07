@@ -202,6 +202,10 @@ prepare() {
   ln -s /usr/bin/rustc third_party/rust-toolchain/bin/
   ln -s /usr/bin/java third_party/jdk/current/bin/
 
+  #remove x86_64 binary and use our own
+  rm third_party/gperf/cipd/bin/gperf
+  ln -s /usr/bin/gperf third_party/gperf/cipd/bin/
+
   if (( !_system_clang )); then
     # Use prebuilt rust as system rust cannot be used due to the error:
     #   error: the option `Z` is only accepted on the nightly compiler
