@@ -44,6 +44,7 @@ pkgbase = chromium
 	depends = brotli
 	depends = libjpeg-turbo
 	depends = openh264
+	depends = dav1d
 	depends = flac
 	depends = libdrm
 	depends = libxml2
