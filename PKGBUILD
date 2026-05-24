@@ -7,7 +7,7 @@
 
 pkgname=chromium
 pkgver=148.0.7778.178
-pkgrel=2
+pkgrel=3
 _launcher_ver=8
 _manual_clone=1
 _system_clang=1
@@ -17,21 +17,41 @@ url="https://www.chromium.org/Home"
 license=('BSD-3-Clause')
 depends=(
   'alsa-lib'
+  'at-spi2-core'
+  'cairo'
   'dbus'
   'desktop-file-utils'
+  'expat'
+  'glib2'
+  'glibc'
   'gtk3'
   'hicolor-icon-theme'
   'libcups'
   'libffi'
+  'libgcc'
   'libgcrypt'
   'libpulse'
+  'libstdc++'
   'libva'
+  'libx11'
+  'libxcb'
+  'libxcomposite'
+  'libxdamage'
+  'libxext'
+  'libxfixes'
+  'libxkbcommon'
+  'libxrandr'
   'libxss'
+  'mesa'
+  'nspr'
   'nss'
+  'pango'
   'pciutils'
   'systemd'
+  'systemd-libs'
   'ttf-liberation'
   'xdg-utils'
+  'zlib'
 )
 makedepends=(
   'clang'
@@ -52,6 +72,7 @@ makedepends=(
 optdepends=('pipewire: WebRTC desktop sharing under Wayland'
             'kdialog: support for native dialogs in Plasma'
             'gtk4: for --gtk-version=4 (GTK4 IME might work better on Wayland)'
+            'qt6-base: Qt support'
             'org.freedesktop.secrets: password storage backend on GNOME, KDE and Xfce'
             'upower: Battery Status API support')
 options=('!lto') # Chromium adds its own flags for ThinLTO
