@@ -1,4 +1,5 @@
 # Maintainer: Christian Heusel <gromit@archlinux.org>
+# Maintainer: Jonathan Grotelüschen <tippfehlr@archlinux.org>
 # Contributor: Evangelos Foutras <foutrelis@archlinux.org>
 # Contributor: Pierre Schmitz <pierre@archlinux.de>
 # Contributor: Jan "heftig" Steffens <jan.steffens@gmail.com>
@@ -6,7 +7,7 @@
 
 pkgname=chromium
 pkgver=148.0.7778.178
-pkgrel=1
+pkgrel=2
 _launcher_ver=8
 _manual_clone=1
 _system_clang=1
