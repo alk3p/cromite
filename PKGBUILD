@@ -62,6 +62,7 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         https://github.com/foutrelis/chromium-launcher/archive/v$_launcher_ver/chromium-launcher-$_launcher_ver.tar.gz
         https://github.com/uazo/cromite/archive/refs/tags/v$pkgver-$_commit.tar.gz
         https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_chrome_ver-1_amd64.deb
+        b-505023370.patch
         cromite-fixup-Enable-component-updater.patch
         widevine-revision.patch
         chromium-138-nodejs-version-check.patch
@@ -81,6 +82,7 @@ sha256sums=('57a78706c149afe8cacdc801c20ef89ad1c1fbba0ad2154fda03f4fc0f33c9d6'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
             '7406201bc59024d7d918ffebef3c874313c27b6d0ae3b84486b914fd53d8d088'
             'd64f4facad66a5424527a45b0b76443740aa38b5f825b1a99a95d0ac3a594d55'
+            '0947b0bae80dec3bca959ec66a4a82c07609c7614068b61583d6fdd27a61ffd4'
             '8ffc34510cc73475aad54c1bc49f618c9b1eb4ac77984072d02f0de71a9cb9d3'
             'e9f6c962dcc5bbef3120004de8f4b29b09f0f74d16a272c0a704ef485c52441a'
             '11a96ffa21448ec4c63dd5c8d6795a1998d8e5cd5a689d91aea4d2bdd13fb06e'
@@ -192,6 +194,7 @@ prepare() {
   patch -Np1 -i $srcdir/widevine-revision.patch
 
   # Upstream fixes
+  patch -Np1 -i $srcdir/b-505023370.patch
 
   # Fixes from Gentoo
   patch -Np1 -i $srcdir/chromium-138-nodejs-version-check.patch
