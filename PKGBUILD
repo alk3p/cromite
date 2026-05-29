@@ -9,7 +9,7 @@ pkgver=148.0.7778.168
 _pkgver=148.0.7778.167
 _chrome_ver=$_pkgver
 _commit=cb3baf14f52eb4365d017f640f85310735c19b79
-pkgrel=1
+pkgrel=2
 _launcher_ver=8
 _manual_clone=1
 _system_clang=1
@@ -168,16 +168,16 @@ prepare() {
     third_party/libxml/chromium/*.cc
 
   pushd $srcdir/cromite-$pkgver-$_commit/build/patches
+  # Restore script_executable
+  rm -f Force-use-vpython3-for-all-scripts.patch
   # Restore default codecs
   rm -f Enable-platform-aac-audio-and-h264-video.patch
   # Enable reverse image search
   rm -f WIN-Disable-search-for-image.patch
-  # Enable Google {Account, Translate}
+  # Enable Google Account
   rm -f add-browser-policy.patch
-  #rm -f ungoogled-chromium-Disable-translate-integration.patch
-  rm -f ungoogled-chromium-Disable-Gaia.patch
+  rm -f Partitioning-all-cookies-by-top-frame-domain.patch
   rm -f Internal-firewall.patch
-  rm -f Remove-GoogleAccountsPrivateApiHost.patch
   # Remove bundled ABP
   find . -iname "*eyeo*.patch" -type f -delete
   popd
