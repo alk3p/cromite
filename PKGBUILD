@@ -6,10 +6,10 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=chromium
-pkgver=148.0.7778.215
+pkgver=149.0.7827.53
 pkgrel=1
 _launcher_ver=8
-_manual_clone=1
+_manual_clone=0
 _system_clang=1
 pkgdesc="A web browser built for speed, simplicity, and security"
 arch=('x86_64')
@@ -80,30 +80,30 @@ source=(https://commondatastorage.googleapis.com/chromium-browser-official/chrom
         https://github.com/foutrelis/chromium-launcher/archive/v$_launcher_ver/chromium-launcher-$_launcher_ver.tar.gz
         chromium-138-nodejs-version-check.patch
         chromium-145-fix-SYS_SECCOMP.patch
-        chromium-146-drop-unknown-clang-flag.patch
-        chromium-146-build-with-wasm-rollup.patch
         chromium-147-revert-clang-no-lifetime-dse-flag.patch
         chromium-147-rust-1.95-bytemuck.patch
-        chromium-148-revert-clang-fsanitize-return-flag-1.patch
-        chromium-148-revert-clang-fsanitize-return-flag-2.patch
+        chromium-149-drop-unknown-clang-flag.patch
+        chromium-149-unbundle-minizip-undo-unicode.patch
+        chromium-149-use-of-undeclared-identifier-ERROR.patch
+        chromium-149-build-with-wasm-rollup.patch
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         enable-widevine-arm64.patch
         use-oauth2-client-switches-as-default.patch
         glibc-2.42-baud-rate-fix.patch)
-sha256sums=('2e2f36e3cd1ebc4ad57fd310774a5e5e9db77883d5f9374fedeaabd3c103b819'
+sha256sums=('dabb5f0af076a53f2eb436703affcb51a5e07e08d078b2f39a0430b1a5166c34'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
             '11a96ffa21448ec4c63dd5c8d6795a1998d8e5cd5a689d91aea4d2bdd13fb06e'
             '4fc040a0656a0a524dd8ad090cd129fc5b6cb21adcc66be82080165789e8c13e'
-            '4bf6baedb6d9a84b98a85584981f4d2db1ea91f5596f44d700027b8cdbf1ecbb'
-            '45fa20cc27ef0aa00d654d0bac84bfaa8d8090b5f8aec49cc2e8d7249d3cd7ba'
             'c382830318c5b37826ecf44f3ba9def6be8affdad1bce819ecb83f3222ff4b3a'
             'b9e6339221efe03540ffb360c161d93604a1fc93a5a1c53e5e9849066f987d05'
-            '2c0d0407ff7d4d607cf4f4b56aef4913df1bcbacb630d85c06a4a125fd0dceab'
-            '7836f666b78b85ac4a05cc9403df74c80d17f18a7f2a29d489848c76db919128'
+            '5ade4cdba7afebfcc09fa969f15bf27404579beac5b7bafb59a0214d407e4ad2'
+            'c22338d13f12772cdbcb5cfc1ace94438b9f9c72353cdb165a3ff3ef3d677c78'
+            '951514535be65f0e2f84e82305d96292be1da353c1427ba1048ea24be70003c4'
+            'c4df27d25d298ac95d85e6f06b558b73bb67de5110a19a0228cb7f8519291ea5'
             'ec8e49b7114e2fa2d359155c9ef722ff1ba5fe2c518fa48e30863d71d3b82863'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
-            '9c766b82d1143cb3413fe2057361bd2655e46287eacc2c6d6f8504b4c255647a'
+            '33d1650e183a86cc2d0e9b0fcc08a5da76c7354d25a419921e9d2dc02b8b3854'
             '9343afa1a4308a7cfb3317229f5aff7778688debcc03c4a74a85908aa1d0cc3a'
             '1c1898f263eaacbc069a8e1a3e732852350350d1dad4cb1a6bba430e3b796cd0')
 
@@ -196,7 +196,7 @@ prepare() {
   # calls that require the UBSan runtime, which is not linked in a trap-mode
   # build. Drop the entire sanitize_c_array_bounds cflags block.
   # Can be dropped when arch has LLVM 23.
-  patch -Np1 -i ../chromium-146-drop-unknown-clang-flag.patch
+  patch -Np1 -i ../chromium-149-drop-unknown-clang-flag.patch
 
   # Causes a build failure with our clang version
   patch -Np1 -i ../chromium-147-revert-clang-no-lifetime-dse-flag.patch
@@ -204,7 +204,7 @@ prepare() {
   # https://crbug.com/456218403
   patch -Np1 -i ../chromium-145-fix-SYS_SECCOMP.patch
 
-  patch -Np1 -i ../chromium-146-build-with-wasm-rollup.patch
+  patch -Np1 -i ../chromium-149-build-with-wasm-rollup.patch
 
   patch -Np1 -i ../chromium-147-rust-1.95-bytemuck.patch
 
@@ -214,17 +214,20 @@ prepare() {
   # https://crbug.com/456677057
   patch -Np1 -i ../glibc-2.42-baud-rate-fix.patch
 
-  # Causes a build failure with our clang version
-  patch -Np1 -i ../chromium-148-revert-clang-fsanitize-return-flag-1.patch
-  patch -Np1 -i ../chromium-148-revert-clang-fsanitize-return-flag-2.patch
+  # Chromium bundles a patched minizip with extra features.
+  patch -Np1 -i ../chromium-149-unbundle-minizip-undo-unicode.patch
+
+  patch -Np1 -i ../chromium-149-use-of-undeclared-identifier-ERROR.patch
 
   # Link to system tools required by the build
   mkdir -p third_party/node/linux/node-linux-x64/bin \
            third_party/rust-toolchain/bin \
-           third_party/jdk/current/bin
+           third_party/jdk/current/bin \
+           third_party/rust-toolchain/bin
 
   ln -s /usr/bin/node third_party/node/linux/node-linux-x64/bin/
   ln -s /usr/bin/java third_party/jdk/current/bin/
+  ln -s /usr/bin/rustc third_party/rust-toolchain/bin/
 
   # remove x86_64 binary and use our own
   rm -f third_party/gperf/cipd/bin/gperf
