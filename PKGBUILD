@@ -4,6 +4,7 @@
 # Contributor: Pierre Schmitz <pierre@archlinux.de>
 # Contributor: Jan "heftig" Steffens <jan.steffens@gmail.com>
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
+# Contributor: Caleb Maclennan <caleb@alerque.com>
 
 pkgname=chromium
 pkgver=150.0.7871.181
@@ -239,7 +240,6 @@ prepare() {
 
   # Link to system tools required by the build
   mkdir -p third_party/node/linux/node-linux-x64/bin \
-           third_party/rust-toolchain/bin \
            third_party/jdk/current/bin \
            third_party/rust-toolchain/bin
 
