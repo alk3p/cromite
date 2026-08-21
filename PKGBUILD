@@ -7,7 +7,7 @@
 # Contributor: Caleb Maclennan <caleb@alerque.com>
 
 pkgname=chromium
-pkgver=151.0.7922.169
+pkgver=151.0.7922.173
 pkgrel=1
 _launcher_ver=8
 _manual_clone=1
