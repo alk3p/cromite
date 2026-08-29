@@ -1,15 +1,16 @@
 # Maintainer: Christian Heusel <gromit@archlinux.org>
+# Maintainer: Jonathan Grotelüschen <tippfehlr@archlinux.org>
 # Contributor: Evangelos Foutras <foutrelis@archlinux.org>
 # Contributor: Pierre Schmitz <pierre@archlinux.de>
 # Contributor: Jan "heftig" Steffens <jan.steffens@gmail.com>
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
+# Contributor: Caleb Maclennan <caleb@alerque.com>
 
 pkgname=cromite
-pkgver=148.0.7778.168
-_pkgver=148.0.7778.167
-_chrome_ver=$_pkgver
-_commit=cb3baf14f52eb4365d017f640f85310735c19b79
-pkgrel=2
+pkgver=151.0.7922.75
+_chrome_ver=$pkgver
+_commit=7d426505acbe6515c2c667505f07d19ba5c01c1f
+pkgrel=1
 _launcher_ver=8
 _manual_clone=1
 _system_clang=1
@@ -19,27 +20,48 @@ url="https://github.com/uazo/cromite"
 license=('GPL3')
 depends=(
   'alsa-lib'
+  'at-spi2-core'
+  'cairo'
   'dbus'
   'desktop-file-utils'
+  'expat'
+  'glib2'
+  'glibc'
   'gtk3'
   'hicolor-icon-theme'
   'libcups'
   'libffi'
+  'libgcc'
   'libgcrypt'
   'libpulse'
+  'libstdc++'
   'libva'
+  'libx11'
+  'libxcb'
+  'libxcomposite'
+  'libxdamage'
+  'libxext'
+  'libxfixes'
+  'libxkbcommon'
+  'libxrandr'
   'libxss'
+  'mesa'
+  'nspr'
   'nss'
+  'pango'
   'pciutils'
   'systemd'
+  'systemd-libs'
   'ttf-liberation'
   'xdg-utils'
+  'zlib'
 )
 makedepends=(
   'clang'
   'compiler-rt'
   'git'
   'gn'
+  'go'
   'gperf'
   'java-runtime-headless'
   'lld'
@@ -54,48 +76,51 @@ makedepends=(
 optdepends=('pipewire: WebRTC desktop sharing under Wayland'
             'kdialog: support for native dialogs in Plasma'
             'gtk4: for --gtk-version=4 (GTK4 IME might work better on Wayland)'
+            'qt6-base: Qt support'
             'org.freedesktop.secrets: password storage backend on GNOME, KDE and Xfce'
             'upower: Battery Status API support')
 install="${pkgname}.install"
 options=('!lto') # Chromium adds its own flags for ThinLTO
-source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$_pkgver-lite.tar.xz
+source=(https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$pkgver-lite.tar.xz
         https://github.com/foutrelis/chromium-launcher/archive/v$_launcher_ver/chromium-launcher-$_launcher_ver.tar.gz
-        https://github.com/uazo/cromite/archive/refs/tags/v$pkgver-$_commit.tar.gz
+        https://github.com/uazo/cromite/archive/$_commit.tar.gz
         https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_$_chrome_ver-1_amd64.deb
-        b-505023370.patch
         cromite-fixup-Enable-component-updater.patch
         widevine-revision.patch
         chromium-138-nodejs-version-check.patch
         chromium-145-fix-SYS_SECCOMP.patch
-        chromium-146-drop-unknown-clang-flag.patch
-        chromium-146-build-with-wasm-rollup.patch
         chromium-147-revert-clang-no-lifetime-dse-flag.patch
         chromium-147-rust-1.95-bytemuck.patch
-        chromium-148-revert-clang-fsanitize-return-flag-1.patch
-        chromium-148-revert-clang-fsanitize-return-flag-2.patch
+        chromium-149-drop-unknown-clang-flag.patch
+        chromium-149-unbundle-minizip-undo-unicode.patch
+        chromium-149-use-of-undeclared-identifier-ERROR.patch
+        chromium-149-build-with-wasm-rollup.patch
+        chromium-150-revert-avx-flag-change.patch
+        chromium-151-dont-depends-on-histograms.xml-if-it-is-not-git-checkout.patch
         compiler-rt-adjust-paths.patch
         increase-fortify-level.patch
         enable-widevine-arm64.patch
         use-oauth2-client-switches-as-default.patch
         glibc-2.42-baud-rate-fix.patch)
-sha256sums=('57a78706c149afe8cacdc801c20ef89ad1c1fbba0ad2154fda03f4fc0f33c9d6'
+sha256sums=('SKIP'
             '213e50f48b67feb4441078d50b0fd431df34323be15be97c55302d3fdac4483a'
-            '7406201bc59024d7d918ffebef3c874313c27b6d0ae3b84486b914fd53d8d088'
-            'd64f4facad66a5424527a45b0b76443740aa38b5f825b1a99a95d0ac3a594d55'
-            '0947b0bae80dec3bca959ec66a4a82c07609c7614068b61583d6fdd27a61ffd4'
+            '10f424a2fb0e48fed353a243d8eba7ec8a181d648b683f8ef6f01e784c8e4489'
+            'cb7359a53308fbe441bef6d5bdd61b408c1b40f980e8bf7d02eb311617918d10'
             '8ffc34510cc73475aad54c1bc49f618c9b1eb4ac77984072d02f0de71a9cb9d3'
             'e9f6c962dcc5bbef3120004de8f4b29b09f0f74d16a272c0a704ef485c52441a'
             '11a96ffa21448ec4c63dd5c8d6795a1998d8e5cd5a689d91aea4d2bdd13fb06e'
             '4fc040a0656a0a524dd8ad090cd129fc5b6cb21adcc66be82080165789e8c13e'
-            '4bf6baedb6d9a84b98a85584981f4d2db1ea91f5596f44d700027b8cdbf1ecbb'
-            '45fa20cc27ef0aa00d654d0bac84bfaa8d8090b5f8aec49cc2e8d7249d3cd7ba'
             'c382830318c5b37826ecf44f3ba9def6be8affdad1bce819ecb83f3222ff4b3a'
             'b9e6339221efe03540ffb360c161d93604a1fc93a5a1c53e5e9849066f987d05'
-            '2c0d0407ff7d4d607cf4f4b56aef4913df1bcbacb630d85c06a4a125fd0dceab'
-            '7836f666b78b85ac4a05cc9403df74c80d17f18a7f2a29d489848c76db919128'
+            'e25cf8fb60f5958127053c515b8decc2b45acceebf9a57654066d093df11f8e9'
+            'c22338d13f12772cdbcb5cfc1ace94438b9f9c72353cdb165a3ff3ef3d677c78'
+            '951514535be65f0e2f84e82305d96292be1da353c1427ba1048ea24be70003c4'
+            'c4df27d25d298ac95d85e6f06b558b73bb67de5110a19a0228cb7f8519291ea5'
+            '5f6ccb7b945c8a13c690493723bad816b36f2f25792d47e677b56f8200907e60'
+            '552ddcef0cf139927f54c9c728c68b0e385600107e5166449b29de75e5dfcd7f'
             'ec8e49b7114e2fa2d359155c9ef722ff1ba5fe2c518fa48e30863d71d3b82863'
             'd634d2ce1fc63da7ac41f432b1e84c59b7cceabf19d510848a7cff40c8025342'
-            '9c766b82d1143cb3413fe2057361bd2655e46287eacc2c6d6f8504b4c255647a'
+            '33d1650e183a86cc2d0e9b0fcc08a5da76c7354d25a419921e9d2dc02b8b3854'
             '9343afa1a4308a7cfb3317229f5aff7778688debcc03c4a74a85908aa1d0cc3a'
             '1c1898f263eaacbc069a8e1a3e732852350350d1dad4cb1a6bba430e3b796cd0')
 
@@ -109,7 +134,7 @@ fi
 # Keys are the names in the above script; values are the dependencies in Arch
 declare -gA _system_libs=(
   [brotli]=brotli
-  #[dav1d]=dav1d
+  [dav1d]=dav1d
   #[ffmpeg]=ffmpeg    # YouTube playback stopped working in Chromium 120
   [flac]=flac
   [fontconfig]=fontconfig
@@ -152,9 +177,9 @@ prepare() {
   bsdtar -x --strip-components 4 -f data.tar.xz opt/google/chrome/WidevineCdm
 
   if (( _manual_clone )); then
-    ./fetch-chromium-release $_pkgver
+    ./fetch-chromium-release $pkgver
   fi
-  cd chromium-$_pkgver
+  cd chromium-$pkgver
 
   # Allow building against system libraries in official builds
   sed -i 's/OFFICIAL_BUILD/GOOGLE_CHROME_BUILD/' \
@@ -167,7 +192,7 @@ prepare() {
     third_party/blink/renderer/core/xml/parser/xml_document_parser.cc \
     third_party/libxml/chromium/*.cc
 
-  pushd $srcdir/cromite-$pkgver-$_commit/build/patches
+  pushd $srcdir/cromite-$_commit/build/patches
   # Restore script_executable
   rm -f Force-use-vpython3-for-all-scripts.patch
   # Restore default codecs
@@ -182,10 +207,10 @@ prepare() {
   find . -iname "*eyeo*.patch" -type f -delete
   popd
 
-  for patch in $(cat $srcdir/cromite-$pkgver-$_commit/build/cromite_patches_list.txt); do
-    if [ -f $srcdir/cromite-$pkgver-$_commit/build/patches/$patch ]; then
+  for patch in $(cat $srcdir/cromite-$_commit/build/cromite_patches_list.txt); do
+    if [ -f $srcdir/cromite-$_commit/build/patches/$patch ]; then
       echo "Applying: $patch"
-      git apply $srcdir/cromite-$pkgver-$_commit/build/patches/$patch
+      git apply $srcdir/cromite-$_commit/build/patches/$patch
     fi
   done
   patch -Np1 -i $srcdir/cromite-fixup-Enable-component-updater.patch
@@ -194,7 +219,6 @@ prepare() {
   patch -Np1 -i $srcdir/widevine-revision.patch
 
   # Upstream fixes
-  patch -Np1 -i $srcdir/b-505023370.patch
 
   # Fixes from Gentoo
   patch -Np1 -i $srcdir/chromium-138-nodejs-version-check.patch
@@ -211,7 +235,7 @@ prepare() {
   # calls that require the UBSan runtime, which is not linked in a trap-mode
   # build. Drop the entire sanitize_c_array_bounds cflags block.
   # Can be dropped when arch has LLVM 23.
-  patch -Np1 -i $srcdir/chromium-146-drop-unknown-clang-flag.patch
+  patch -Np1 -i $srcdir/chromium-149-drop-unknown-clang-flag.patch
 
   # Causes a build failure with our clang version
   patch -Np1 -i $srcdir/chromium-147-revert-clang-no-lifetime-dse-flag.patch
@@ -219,7 +243,7 @@ prepare() {
   # https://crbug.com/456218403
   patch -Np1 -i $srcdir/chromium-145-fix-SYS_SECCOMP.patch
 
-  patch -Np1 -i $srcdir/chromium-146-build-with-wasm-rollup.patch
+  patch -Np1 -i $srcdir/chromium-149-build-with-wasm-rollup.patch
 
   patch -Np1 -i $srcdir/chromium-147-rust-1.95-bytemuck.patch
 
@@ -229,17 +253,28 @@ prepare() {
   # https://crbug.com/456677057
   patch -Np1 -i $srcdir/glibc-2.42-baud-rate-fix.patch
 
-  # Causes a build failure with our clang version
-  patch -Np1 -i $srcdir/chromium-148-revert-clang-fsanitize-return-flag-1.patch
-  patch -Np1 -i $srcdir/chromium-148-revert-clang-fsanitize-return-flag-2.patch
+  # Chromium bundles a patched minizip with extra features.
+  patch -Np1 -i $srcdir/chromium-149-unbundle-minizip-undo-unicode.patch
+
+  patch -Np1 -i $srcdir/chromium-149-use-of-undeclared-identifier-ERROR.patch
+
+  # Fix issue about missing AVX functions
+  # Credit: https://github.com/ungoogled-software/ungoogled-chromium/pull/3837
+  patch -Np1 -i $srcdir/chromium-150-revert-avx-flag-change.patch
+
+  # Credit: https://github.com/ungoogled-software/ungoogled-chromium/pull/3883
+  patch -Np1 -i $srcdir/chromium-151-dont-depends-on-histograms.xml-if-it-is-not-git-checkout.patch
 
   # Link to system tools required by the build
   mkdir -p third_party/node/linux/node-linux-x64/bin \
+           third_party/jdk/current/bin \
            third_party/rust-toolchain/bin \
-           third_party/jdk/current/bin
+           third_party/dawn/tools/golang/linux-amd64/bin
 
   ln -sf /usr/bin/node third_party/node/linux/node-linux-x64/bin/
   ln -sf /usr/bin/java third_party/jdk/current/bin/
+  ln -sf /usr/bin/rustc third_party/rust-toolchain/bin/
+  ln -sf /usr/bin/go third_party/dawn/tools/golang/linux-amd64/bin/
 
   # remove x86_64 binary and use our own
   rm -f third_party/gperf/cipd/bin/gperf
@@ -271,15 +306,17 @@ prepare() {
     --system-libraries "${!_system_libs[@]}"
 
   # Generate missing header
-  python3 build/util/lastchange.py -m DAWN_COMMIT_HASH \
-    -s third_party/dawn --revision gpu/webgpu/DAWN_VERSION \
-    --header gpu/webgpu/dawn_commit_hash.h
+  if (( _manual_clone )); then
+    python3 build/util/lastchange.py -m DAWN_COMMIT_HASH \
+      -s third_party/dawn --revision gpu/webgpu/DAWN_VERSION \
+      --header gpu/webgpu/dawn_commit_hash.h
+  fi
 }
 
 build() {
   make CHROMIUM_NAME=cromite -C chromium-launcher-$_launcher_ver
 
-  cd chromium-$_pkgver
+  cd chromium-$pkgver
 
   if (( _system_clang )); then
     export CC=clang
@@ -330,6 +367,7 @@ build() {
     'chrome_pgo_phase=2'
     'enable_glic=false'
     'build_tflite_with_xnnpack=false'
+    'build_litert_with_xnnpack=false'
   )
 
   if [[ -n ${_system_libs[icu]+set} ]]; then
@@ -408,7 +446,7 @@ package() {
   install -Dvm644 LICENSE \
     "$pkgdir/usr/share/licenses/cromite/LICENSE.launcher"
 
-  cd ../chromium-$_pkgver
+  cd ../chromium-$pkgver
 
   install -Dv out/Release/chrome "$pkgdir/usr/lib/cromite/cromite"
   # install -Dv out/Release/chromedriver.unstripped "$pkgdir/usr/bin/chromedriver"
@@ -433,7 +471,7 @@ package() {
     info_file=chrome/installer/linux/common/chromium-browser.info
     . $info_file; PACKAGE=cromite
     export $(grep -o '^[A-Z_]*' $info_file)
-    sed -E -e 's/@@([A-Z_]*)@@/\${\1}/g' -e '/<update_contact>/d' $tmpl_file | envsubst
+    sed -E -e 's/@@([A-Z_]*)/\${\1}/g' -e '/<update_contact>/d' $tmpl_file | envsubst
   ) \
   | install -Dvm644 /dev/stdin "$pkgdir/usr/share/metainfo/cromite.appdata.xml"
 
