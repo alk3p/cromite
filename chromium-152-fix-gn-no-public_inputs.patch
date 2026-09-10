@@ -1,0 +1,64 @@
+diff --git i/scripts/build/ninja/copy.gni w/scripts/build/ninja/copy.gni
+index d6d71a6f..a03d647c 100644
+--- i/scripts/build/ninja/copy.gni
++++ w/scripts/build/ninja/copy.gni
+@@ -25,9 +25,6 @@ template("copy_to_gen") {
+       string_join(",", sources),
+     ]
+ 
+-    # Expose ts files to dependent targets.
+-    public_inputs = filter_include(sources, [ "*.ts" ])
+-
+     outputs = []
+     foreach(_input, sources) {
+       outputs += [ "$target_gen_dir/$_input" ]
+diff --git i/scripts/build/ninja/devtools_entrypoint.gni w/scripts/build/ninja/devtools_entrypoint.gni
+index 6bee3ef7..13925d93 100644
+--- i/scripts/build/ninja/devtools_entrypoint.gni
++++ w/scripts/build/ninja/devtools_entrypoint.gni
+@@ -197,9 +197,6 @@ template("devtools_entrypoint") {
+   node_action(target_name) {
+     script = "scripts/build/ninja/generate-tsconfig.js"
+ 
+-    # Expose ts files to dependent targets.
+-    public_inputs = [ invoker.entrypoint ]
+-
+     args = [
+              rebase_path(_generated_tsconfig_location, root_build_dir),
+              rebase_path(invoker.entrypoint, root_build_dir),
+diff --git i/scripts/build/ninja/devtools_pre_built.gni w/scripts/build/ninja/devtools_pre_built.gni
+index 1f38b18a..3d76a752 100644
+--- i/scripts/build/ninja/devtools_pre_built.gni
++++ w/scripts/build/ninja/devtools_pre_built.gni
+@@ -17,9 +17,6 @@ template("devtools_pre_built") {
+ 
+     public_deps = invoker.deps
+ 
+-    # Expose ts files to dependent targets.
+-    public_inputs = filter_include(sources, [ "*.ts" ])
+-
+     _copy_src = rebase_path(get_path_info(target_name, "dir"), root_build_dir)
+     _copy_dest = rebase_path(target_gen_dir, root_build_dir)
+ 
+diff --git i/scripts/build/typescript/typescript.gni w/scripts/build/typescript/typescript.gni
+index 5ff48eb1..7ab9cf15 100644
+--- i/scripts/build/typescript/typescript.gni
++++ w/scripts/build/typescript/typescript.gni
+@@ -207,17 +207,6 @@ template("ts_library") {
+     output_files = [ "$target_gen_dir/$target_name-tsconfig.json" ]
+ 
+     if (defined(sources)) {
+-      # Expose ts files to dependent targets.
+-      public_inputs =
+-          filter_include(sources,
+-                         [
+-                           "*.ts",
+-
+-                           # TODO: Migrate the files below to TypeScript
+-                           # and remove them from this list.
+-                           "*ahem.js",
+-                         ])
+-
+       args += [ "--sources" ] + rebase_path(sources, root_build_dir)
+ 
+       foreach(src, sources) {
